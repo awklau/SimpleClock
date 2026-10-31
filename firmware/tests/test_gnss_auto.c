@@ -1592,8 +1592,9 @@ int main(int argc, char **argv)
         static const char *const good_lines[] = {
             "  ClockSyncThreshold, msec1, on\r\n", "  TimingSystem, auto\r\n",
             "  DataInOut, COM1, auto, SBF+NMEA, (on)\r\n",
-            "  SBFOutput, Stream1, COM1, PVTGeodetic+ReceiverTime+ReceiverStatus+MeasEpoch+EndOfPVT"
-            "+PosCovCartesian+VelCovCartesian+RFStatus+DOP, sec1\r\n"};
+            ("  SBFOutput, Stream1, COM1, "
+             "PVTGeodetic+ReceiverTime+ReceiverStatus+MeasEpoch+EndOfPVT"
+             "+PosCovCartesian+VelCovCartesian+RFStatus+DOP, sec1\r\n")};
         for (unsigned i = 0U; i < 4U; ++i)
         {
             if (strcmp(argv[2], names[i]) == 0)
