@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: firmware
+
+jobs:
+  native:
+    name: Native (${{ matrix.compiler }}, ${{ matrix.configuration }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [GCC, Clang]
+        configuration: [Debug, Release]
+        include:
+          - compiler: GCC
+            cc: gcc
+          - compiler: Clang
+            cc: clang
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
+          -DCMAKE_C_COMPILER=${{ matrix.cc }}
+          -DSIMPLECLOCK_BUILD_TESTS=ON
+
+      - name: Report tool versions
+        run: |
+          cmake --version
+          ninja --version
+          ${{ matrix.cc }} --version
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Test host decoders and maintenance transport
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Check generated defaults
+        run: python tools/generate-hybrid-defaults.py --check
+
+  windows-msvc:
+    name: Windows (MSVC, ${{ matrix.configuration }})
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Report tool versions
+        shell: pwsh
+        run: |
+          cmake --version
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+          -DSIMPLECLOCK_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.configuration }} --parallel
+
+      - name: Test
+        run: ctest --test-dir build -C ${{ matrix.configuration }} --output-on-failure
+
+      - name: Test host decoders and maintenance transport
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Check generated defaults
+        run: python tools/generate-hybrid-defaults.py --check
+
+  macos:
+    name: macOS (Apple Clang, Debug)
+    runs-on: macos-14
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Ninja
+        run: brew install ninja
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+          -DSIMPLECLOCK_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Test host tools (flasher, capture, transport, decoders)
+        run: python3 -m unittest discover -s tests -p "test_*.py" -v
+
+  firmware:
+    name: Firmware images (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            archive: arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi.tar.xz
+          - os: macos-14
+            archive: arm-gnu-toolchain-14.3.rel1-darwin-arm64-arm-none-eabi.tar.xz
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Ninja
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then brew install ninja; else sudo apt-get install -y ninja-build; fi
+
+      - name: Install Arm GNU Toolchain 14.3.Rel1
+        run: |
+          base=https://developer.arm.com/-/media/Files/downloads/gnu/14.3.rel1/binrel
+          curl -fsSLO "$base/${{ matrix.archive }}"
+          curl -fsSLO "$base/${{ matrix.archive }}.sha256asc"
+          shasum -a 256 -c "${{ matrix.archive }}.sha256asc"
+          mkdir -p "$RUNNER_TEMP/arm"
+          tar -xJf "${{ matrix.archive }}" -C "$RUNNER_TEMP/arm" --strip-components=1
+          echo "$RUNNER_TEMP/arm/bin" >> "$GITHUB_PATH"
+
+      - name: Build firmware, GNSS bridge and board-check images
+        run: |
+          arm-none-eabi-gcc --version | head -n 1
+          for preset in stm32c071-auto-hybrid stm32c071-gnss-bridge stm32c071-led1 stm32c071-clock-probe; do
+            cmake --preset "$preset"
+            cmake --build --preset "$preset"
+          done
+
+      - name: Report image hashes
+        run: shasum -a 256 build/stm32c071-*/artifacts/*.bin

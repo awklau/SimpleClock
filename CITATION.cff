@@ -1,0 +1,24 @@
+# TODO before publishing: paper details, version, release date and licence.
+# No e-mail addresses: GitHub links the repository to its owner's profile.
+cff-version: 1.2.0
+message: "If you use SimpleClock, please cite the paper below."
+title: "SimpleClock: GNSS-disciplined OCXO reference"
+type: software
+authors:
+  - family-names: "Lau"
+    given-names: "Albert Wai Kit"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/awklau/SimpleClock"
+license: "<licence>"
+version: "<version>"
+date-released: "<YYYY-MM-DD>"
+preferred-citation:
+  type: article
+  title: "<paper title>"
+  authors:
+    - family-names: "Lau"
+      given-names: "Albert Wai Kit"
+    # TODO: co-authors
+  journal: "<journal or conference>"
+  year: "<year>"
+  doi: "<doi>"

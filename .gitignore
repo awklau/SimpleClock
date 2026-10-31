@@ -1,0 +1,29 @@
+# Build output and local toolchains
+build/
+cmake-build-*/
+.tools/
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+*.map
+
+# Flashing evidence, recordings and other local output
+tmp/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+
+# IDE and OS
+.cache/
+.clangd/
+.vs/
+.vscode/
+compile_commands.json
+*.user
+*.suo
+Thumbs.db
+.DS_Store

@@ -1,0 +1,142 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "stm32c071-auto-hybrid",
+      "displayName": "Normal firmware",
+      "inherits": "stm32c071-thermal-probe",
+      "binaryDir": "${sourceDir}/build/stm32c071-auto-hybrid",
+      "cacheVariables": {
+        "SIMPLECLOCK_AUTO_HYBRID": "ON"
+      }
+    },
+    {
+      "name": "native",
+      "displayName": "Native host (Ninja)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/native",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SIMPLECLOCK_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "native-release",
+      "displayName": "Native host release (Ninja)",
+      "inherits": "native",
+      "binaryDir": "${sourceDir}/build/native-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "arm-none-eabi",
+      "displayName": "Arm Cortex-M0+ static library",
+      "inherits": "native",
+      "binaryDir": "${sourceDir}/build/arm-none-eabi",
+      "toolchainFile": "${sourceDir}/cmake/arm-none-eabi.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SIMPLECLOCK_BUILD_TESTS": "OFF"
+      }
+    },
+    {
+      "name": "stm32c071-led1",
+      "displayName": "Board check: LED1 blink",
+      "inherits": "arm-none-eabi",
+      "binaryDir": "${sourceDir}/build/stm32c071-led1",
+      "cacheVariables": {
+        "SIMPLECLOCK_BUILD_TESTS": "OFF",
+        "SIMPLECLOCK_BUILD_STM32C071_LED1_DIAGNOSTIC": "ON"
+      }
+    },
+    {
+      "name": "stm32c071-tmp117-cdc",
+      "hidden": true,
+      "inherits": "arm-none-eabi",
+      "cacheVariables": {
+        "SIMPLECLOCK_BUILD_TESTS": "OFF",
+        "SIMPLECLOCK_BUILD_STM32C071_TMP117_CDC": "ON",
+        "SIMPLECLOCK_PRIVATE_USB_TEST_IDENTITY_ACK": "ON"
+      }
+    },
+    {
+      "name": "stm32c071-gnss-bridge",
+      "displayName": "GNSS receiver upgrade bridge",
+      "inherits": "stm32c071-tmp117-cdc",
+      "binaryDir": "${sourceDir}/build/stm32c071-gnss-bridge",
+      "cacheVariables": {
+        "SIMPLECLOCK_GNSS_BRIDGE": "ON",
+        "SIMPLECLOCK_CLOCK_PROBE": "OFF"
+      }
+    },
+    {
+      "name": "stm32c071-thermal-probe",
+      "hidden": true,
+      "inherits": "stm32c071-clock-probe",
+      "cacheVariables": {
+        "SIMPLECLOCK_THERMAL_PROBE": "ON"
+      }
+    },
+    {
+      "name": "stm32c071-clock-probe",
+      "displayName": "Board check: read-only clock probe",
+      "inherits": "stm32c071-tmp117-cdc",
+      "binaryDir": "${sourceDir}/build/stm32c071-clock-probe",
+      "cacheVariables": {
+        "SIMPLECLOCK_CLOCK_PROBE": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "stm32c071-auto-hybrid",
+      "configurePreset": "stm32c071-auto-hybrid"
+    },
+    {
+      "name": "native",
+      "configurePreset": "native"
+    },
+    {
+      "name": "native-release",
+      "configurePreset": "native-release"
+    },
+    {
+      "name": "arm-none-eabi",
+      "configurePreset": "arm-none-eabi"
+    },
+    {
+      "name": "stm32c071-led1",
+      "configurePreset": "stm32c071-led1"
+    },
+    {
+      "name": "stm32c071-clock-probe",
+      "configurePreset": "stm32c071-clock-probe"
+    },
+    {
+      "name": "stm32c071-gnss-bridge",
+      "configurePreset": "stm32c071-gnss-bridge"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "native",
+      "configurePreset": "native",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "native-release",
+      "configurePreset": "native-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

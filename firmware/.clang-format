@@ -1,0 +1,16 @@
+# First-party C/C++ only. Do not reformat imported vendor sources.
+BasedOnStyle: LLVM
+IndentWidth: 4
+ContinuationIndentWidth: 4
+ColumnLimit: 100
+BreakBeforeBraces: Allman
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+InsertBraces: true
+SortIncludes: Never
+ReflowComments: false
+SeparateDefinitionBlocks: Always
+PointerAlignment: Right
+DerivePointerAlignment: false

@@ -1,0 +1,3 @@
+# Live hardware I/O only (USB recording, receiver control, and the receiver
+# upgrade on Linux/macOS). Builds, tests and offline analysis need nothing.
+pyserial==3.5

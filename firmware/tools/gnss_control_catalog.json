@@ -1,0 +1,1800 @@
+{
+  "version": 2,
+  "manual": "mosaic-G5 Firmware v1.1.0 Reference Guide",
+  "audit_date": "2026-10-18",
+  "startup_defaults": {
+    "ReceiverDynamics": {
+      "Level": "Low",
+      "Motion": "Static"
+    }
+  },
+  "signals": [
+    "GPSL1CA",
+    "GPSL2PY",
+    "GPSL2C",
+    "GPSL5",
+    "GPSL1C",
+    "GLOL1CA",
+    "GLOL2P",
+    "GLOL2CA",
+    "GLOL3",
+    "GALE1BC",
+    "GALE6BC",
+    "GALE5a",
+    "GALE5b",
+    "GALE5",
+    "GEOL1",
+    "GEOL5",
+    "BDSB1I",
+    "BDSB2I",
+    "BDSB3I",
+    "BDSB1C",
+    "BDSB2a",
+    "BDSB2b",
+    "QZSL1CA",
+    "QZSL2C",
+    "QZSL5",
+    "QZSL6",
+    "QZSL1C",
+    "QZSL1S",
+    "QZSL1CB",
+    "NAVICL5"
+  ],
+  "diagnostic_blocks": [
+    "PVTGeodetic",
+    "PVTCartesian",
+    "PosCovCartesian",
+    "VelCovCartesian",
+    "DOP",
+    "SatVisibility",
+    "ChannelStatus",
+    "RFStatus",
+    "GALAuthStatus",
+    "ReceiverStatus",
+    "ReceiverTime",
+    "ReceiverSetup",
+    "InputLink",
+    "OutputLink",
+    "EndOfPVT",
+    "QualityInd",
+    "xPPSOffset",
+    "RxMessage",
+    "GALGstGps"
+  ],
+  "inventory": [
+    {
+      "name": "GPIO1Mode",
+      "policy": "N",
+      "manual_pages": "63"
+    },
+    {
+      "name": "GPIO2Mode",
+      "policy": "N",
+      "manual_pages": "64"
+    },
+    {
+      "name": "DefaultAccessLevel",
+      "policy": "P",
+      "manual_pages": "77"
+    },
+    {
+      "name": "InactivePortTimeout",
+      "policy": "P",
+      "manual_pages": "79"
+    },
+    {
+      "name": "UserAccessLevel",
+      "policy": "P",
+      "manual_pages": "82"
+    },
+    {
+      "name": "CalibCommonDelay",
+      "policy": "D",
+      "manual_pages": "83"
+    },
+    {
+      "name": "CalibSignalDelay",
+      "policy": "D",
+      "manual_pages": "84"
+    },
+    {
+      "name": "ChannelAllocation",
+      "policy": "D",
+      "manual_pages": "85"
+    },
+    {
+      "name": "CN0Mask",
+      "policy": "D",
+      "manual_pages": "87"
+    },
+    {
+      "name": "MultipathMitigation",
+      "policy": "R",
+      "manual_pages": "88"
+    },
+    {
+      "name": "SatelliteTracking",
+      "policy": "D",
+      "manual_pages": "89"
+    },
+    {
+      "name": "SignalHealthOverride",
+      "policy": "N",
+      "manual_pages": "91"
+    },
+    {
+      "name": "SignalTracking",
+      "policy": "D",
+      "manual_pages": "93"
+    },
+    {
+      "name": "SmoothingInterval",
+      "policy": "D",
+      "manual_pages": "94"
+    },
+    {
+      "name": "AGCMode",
+      "policy": "D",
+      "manual_pages": "96"
+    },
+    {
+      "name": "BBSamplingMode",
+      "policy": "D",
+      "manual_pages": "97"
+    },
+    {
+      "name": "FrontendMode",
+      "policy": "P",
+      "manual_pages": "98"
+    },
+    {
+      "name": "ManualNotchFilter",
+      "policy": "D",
+      "manual_pages": "99"
+    },
+    {
+      "name": "RFInterferenceMitigation",
+      "policy": "D",
+      "manual_pages": "100"
+    },
+    {
+      "name": "AntennaOffset",
+      "policy": "R",
+      "manual_pages": "101"
+    },
+    {
+      "name": "BaseCPB",
+      "policy": "N",
+      "manual_pages": "102"
+    },
+    {
+      "name": "DiffCorrMaxAge",
+      "policy": "D",
+      "manual_pages": "103"
+    },
+    {
+      "name": "DiffCorrUsage",
+      "policy": "D",
+      "manual_pages": "104"
+    },
+    {
+      "name": "ElevationMask",
+      "policy": "R",
+      "manual_pages": "105"
+    },
+    {
+      "name": "GeoidUndulation",
+      "policy": "P",
+      "manual_pages": "106"
+    },
+    {
+      "name": "IonosphereModel",
+      "policy": "D",
+      "manual_pages": "107"
+    },
+    {
+      "name": "MagneticVariance",
+      "policy": "N",
+      "manual_pages": "109"
+    },
+    {
+      "name": "NetworkRTKConfig",
+      "policy": "N",
+      "manual_pages": "110"
+    },
+    {
+      "name": "PVTMode",
+      "policy": "R",
+      "manual_pages": "111"
+    },
+    {
+      "name": "ReceiverDynamics",
+      "policy": "R",
+      "manual_pages": "113"
+    },
+    {
+      "name": "SatelliteHealthOverride",
+      "policy": "N",
+      "manual_pages": "115"
+    },
+    {
+      "name": "SatelliteUsage",
+      "policy": "D",
+      "manual_pages": "116"
+    },
+    {
+      "name": "SBASCorrections",
+      "policy": "R",
+      "manual_pages": "117"
+    },
+    {
+      "name": "SignalUsage",
+      "policy": "D",
+      "manual_pages": "119"
+    },
+    {
+      "name": "SolutionSelectivity",
+      "policy": "N",
+      "manual_pages": "120"
+    },
+    {
+      "name": "StaticPosCartesian",
+      "policy": "R",
+      "manual_pages": "121"
+    },
+    {
+      "name": "StaticPosGeodetic",
+      "policy": "R",
+      "manual_pages": "123"
+    },
+    {
+      "name": "TroposphereModel",
+      "policy": "D",
+      "manual_pages": "124"
+    },
+    {
+      "name": "TroposphereParameters",
+      "policy": "D",
+      "manual_pages": "126"
+    },
+    {
+      "name": "GalOSNMAPublicKeys",
+      "policy": "N",
+      "manual_pages": "128"
+    },
+    {
+      "name": "GalOSNMAUsage",
+      "policy": "D",
+      "manual_pages": "129"
+    },
+    {
+      "name": "SignalAuthentication",
+      "policy": "D",
+      "manual_pages": "131"
+    },
+    {
+      "name": "AttitudeOffset",
+      "policy": "N",
+      "manual_pages": "132"
+    },
+    {
+      "name": "GNSSAttitude",
+      "policy": "N",
+      "manual_pages": "133"
+    },
+    {
+      "name": "GeodeticDatum",
+      "policy": "D",
+      "manual_pages": "134"
+    },
+    {
+      "name": "UserDatum",
+      "policy": "N",
+      "manual_pages": "136"
+    },
+    {
+      "name": "UserDatumVel",
+      "policy": "N",
+      "manual_pages": "137"
+    },
+    {
+      "name": "UserEllipsoid",
+      "policy": "N",
+      "manual_pages": "138"
+    },
+    {
+      "name": "ClockSyncThreshold",
+      "policy": "D",
+      "manual_pages": "139"
+    },
+    {
+      "name": "EventParameters",
+      "policy": "N",
+      "manual_pages": "140"
+    },
+    {
+      "name": "HoldoverTrigger",
+      "policy": "R",
+      "manual_pages": "141"
+    },
+    {
+      "name": "PPS2Parameters",
+      "policy": "N",
+      "manual_pages": "142"
+    },
+    {
+      "name": "PPSParameters",
+      "policy": "R",
+      "manual_pages": "143"
+    },
+    {
+      "name": "TimeSyncSource",
+      "policy": "N",
+      "manual_pages": "145"
+    },
+    {
+      "name": "TimingSystem",
+      "policy": "D",
+      "manual_pages": "146"
+    },
+    {
+      "name": "MarkerParameters",
+      "policy": "R",
+      "manual_pages": "147"
+    },
+    {
+      "name": "ObserverComment",
+      "policy": "N",
+      "manual_pages": "148"
+    },
+    {
+      "name": "ObserverParameters",
+      "policy": "N",
+      "manual_pages": "149"
+    },
+    {
+      "name": "COMSettings",
+      "policy": "P",
+      "manual_pages": "151"
+    },
+    {
+      "name": "DaisyChainMode",
+      "policy": "N",
+      "manual_pages": "152"
+    },
+    {
+      "name": "DataInOut",
+      "policy": "P",
+      "manual_pages": "153"
+    },
+    {
+      "name": "PeriodicEcho",
+      "policy": "N",
+      "manual_pages": "156"
+    },
+    {
+      "name": "SerialTlsSettings",
+      "policy": "P",
+      "manual_pages": "158"
+    },
+    {
+      "name": "NMEAOutput",
+      "policy": "D",
+      "manual_pages": "160"
+    },
+    {
+      "name": "NMEAPrecision",
+      "policy": "P",
+      "manual_pages": "162"
+    },
+    {
+      "name": "NMEATalkerID",
+      "policy": "P",
+      "manual_pages": "163"
+    },
+    {
+      "name": "NMEAVersion",
+      "policy": "P",
+      "manual_pages": "164"
+    },
+    {
+      "name": "SBFGroups",
+      "policy": "P",
+      "manual_pages": "165"
+    },
+    {
+      "name": "SBFOutput",
+      "policy": "R",
+      "manual_pages": "168"
+    },
+    {
+      "name": "RTCMv3Delay",
+      "policy": "N",
+      "manual_pages": "171"
+    },
+    {
+      "name": "RTCMv3Formatting",
+      "policy": "N",
+      "manual_pages": "172"
+    },
+    {
+      "name": "RTCMv3Interval",
+      "policy": "N",
+      "manual_pages": "174"
+    },
+    {
+      "name": "RTCMv3Message1029",
+      "policy": "N",
+      "manual_pages": "175"
+    },
+    {
+      "name": "RTCMv3Output",
+      "policy": "N",
+      "manual_pages": "176"
+    },
+    {
+      "name": "RTCMv3Usage",
+      "policy": "N",
+      "manual_pages": "178"
+    },
+    {
+      "name": "CMRv2Usage",
+      "policy": "N",
+      "manual_pages": "179"
+    },
+    {
+      "name": "DiskFullAction",
+      "policy": "N",
+      "manual_pages": "180"
+    },
+    {
+      "name": "FileNaming",
+      "policy": "N",
+      "manual_pages": "182"
+    },
+    {
+      "name": "LBandBeams",
+      "policy": "N",
+      "manual_pages": "184"
+    },
+    {
+      "name": "LBandCustomServiceID",
+      "policy": "N",
+      "manual_pages": "185"
+    },
+    {
+      "name": "LBandSelectMode",
+      "policy": "N",
+      "manual_pages": "186"
+    }
+  ],
+  "settings": {
+    "CalibCommonDelay": {
+      "name": "CalibCommonDelay",
+      "policy": "D",
+      "manual_pages": "83",
+      "fields": [
+        {
+          "name": "CommonDelay",
+          "min": -10000,
+          "max": 10000,
+          "unit": "ns",
+          "mib_name": "ccoCommonDelay"
+        }
+      ],
+      "notes": "Calibration with provenance only; positive delay advances PPS. Avoid double compensation.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "CalibSignalDelay": {
+      "name": "CalibSignalDelay",
+      "policy": "D",
+      "manual_pages": "84",
+      "fields": [
+        {
+          "name": "Signal",
+          "enum": [
+            "GPSL1CA",
+            "GPSL2PY",
+            "GPSL2C",
+            "GPSL5",
+            "GPSL1C",
+            "GLOL1CA",
+            "GLOL2P",
+            "GLOL2CA",
+            "GLOL3",
+            "GALE1BC",
+            "GALE6BC",
+            "GALE5a",
+            "GALE5b",
+            "GALE5",
+            "GEOL1",
+            "GEOL5",
+            "BDSB1I",
+            "BDSB2I",
+            "BDSB3I",
+            "BDSB1C",
+            "BDSB2a",
+            "BDSB2b",
+            "QZSL1CA",
+            "QZSL2C",
+            "QZSL5",
+            "QZSL6",
+            "QZSL1C",
+            "QZSL1S",
+            "QZSL1CB",
+            "NAVICL5"
+          ],
+          "selector": true,
+          "mib_name": "csiSignal"
+        },
+        {
+          "name": "SignalDelay",
+          "min": -1000,
+          "max": 1000,
+          "unit": "ns",
+          "mib_name": "csiSignalDelay"
+        }
+      ],
+      "notes": "Additional signal calibration, not correction for varying geometry errors.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "ChannelAllocation": {
+      "name": "ChannelAllocation",
+      "policy": "D",
+      "manual_pages": "85",
+      "fields": [
+        {
+          "name": "Channel",
+          "pattern": "Ch\\d{2,3}",
+          "selector": true,
+          "mib_name": "caChannel"
+        },
+        {
+          "name": "Satellite",
+          "satellite": true,
+          "auto": true,
+          "mib_name": "caSatellite"
+        },
+        {
+          "name": "Search",
+          "enum": [
+            "auto",
+            "manual"
+          ],
+          "mib_name": "caSearch"
+        },
+        {
+          "name": "Doppler",
+          "min": -50000,
+          "max": 50000,
+          "unit": "Hz",
+          "mib_name": "caDoppler"
+        },
+        {
+          "name": "Window",
+          "min": 1,
+          "max": 100000,
+          "unit": "Hz",
+          "mib_name": "caWindow"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "CN0Mask": {
+      "name": "CN0Mask",
+      "policy": "D",
+      "manual_pages": "87",
+      "fields": [
+        {
+          "name": "Signal",
+          "enum": [
+            "GPSL1CA",
+            "GPSL2C",
+            "GPSL5",
+            "GPSL1C",
+            "GLOL1CA",
+            "GLOL2P",
+            "GLOL2CA",
+            "GLOL3",
+            "GALE1BC",
+            "GALE6BC",
+            "GALE5a",
+            "GALE5b",
+            "GALE5",
+            "GEOL1",
+            "GEOL5",
+            "BDSB1I",
+            "BDSB2I",
+            "BDSB3I",
+            "BDSB1C",
+            "BDSB2a",
+            "BDSB2b",
+            "QZSL1CA",
+            "QZSL2C",
+            "QZSL5",
+            "QZSL6",
+            "QZSL1C",
+            "QZSL1S",
+            "QZSL1CB",
+            "NAVICL5"
+          ],
+          "selector": true,
+          "mib_name": "cmSignal"
+        },
+        {
+          "name": "Mask",
+          "min": 0,
+          "max": 60,
+          "unit": "dB-Hz",
+          "integer": true,
+          "mib_name": "cmMask"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "MultipathMitigation": {
+      "name": "MultipathMitigation",
+      "policy": "R",
+      "manual_pages": "88",
+      "fields": [
+        {
+          "name": "Code",
+          "enum": [
+            "on",
+            "off"
+          ],
+          "mib_name": "mmCode"
+        },
+        {
+          "name": "Carrier",
+          "enum": [
+            "on",
+            "off"
+          ],
+          "mib_name": "mmCarrier"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "SatelliteTracking": {
+      "name": "SatelliteTracking",
+      "policy": "D",
+      "manual_pages": "89",
+      "fields": [
+        {
+          "name": "Satellite",
+          "satellite_list": true,
+          "list_edits": true,
+          "mib_name": "stSatellite"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "SignalTracking": {
+      "name": "SignalTracking",
+      "policy": "D",
+      "manual_pages": "93",
+      "fields": [
+        {
+          "name": "Signal",
+          "items": [
+            "GPSL1CA",
+            "GPSL2PY",
+            "GPSL2C",
+            "GPSL5",
+            "GPSL1C",
+            "GLOL1CA",
+            "GLOL2P",
+            "GLOL2CA",
+            "GLOL3",
+            "GALE1BC",
+            "GALE6BC",
+            "GALE5a",
+            "GALE5b",
+            "GALE5",
+            "GEOL1",
+            "GEOL5",
+            "BDSB1I",
+            "BDSB2I",
+            "BDSB3I",
+            "BDSB1C",
+            "BDSB2a",
+            "BDSB2b",
+            "QZSL1CA",
+            "QZSL2C",
+            "QZSL5",
+            "QZSL6",
+            "QZSL1C",
+            "QZSL1S",
+            "QZSL1CB",
+            "NAVICL5",
+            "all",
+            "GPS",
+            "GLONASS",
+            "GALILEO",
+            "SBAS",
+            "BEIDOU",
+            "QZSS",
+            "NAVIC"
+          ],
+          "list_edits": true,
+          "mib_name": "ntSignal",
+          "list_remove": false
+        }
+      ],
+      "notes": "Replacement or +/- edits derived from actual Current; dependencies checked on the complete target. Unchanged setters are skipped. Fitted G5-T 1.1.0 rejects relative removal (-); use a checked complete replacement. Relative addition remains available.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "SmoothingInterval": {
+      "name": "SmoothingInterval",
+      "policy": "D",
+      "manual_pages": "94",
+      "fields": [
+        {
+          "name": "Signal",
+          "enum": [
+            "GPSL1CA",
+            "GPSL2PY",
+            "GPSL2C",
+            "GPSL5",
+            "GPSL1C",
+            "GLOL1CA",
+            "GLOL2P",
+            "GLOL2CA",
+            "GLOL3",
+            "GALE1BC",
+            "GALE6BC",
+            "GALE5a",
+            "GALE5b",
+            "GALE5",
+            "GEOL1",
+            "GEOL5",
+            "BDSB1I",
+            "BDSB2I",
+            "BDSB3I",
+            "BDSB1C",
+            "BDSB2a",
+            "BDSB2b",
+            "QZSL1CA",
+            "QZSL2C",
+            "QZSL5",
+            "QZSL6",
+            "QZSL1C",
+            "QZSL1S",
+            "QZSL1CB",
+            "NAVICL5"
+          ],
+          "selector": true,
+          "mib_name": "siSignal"
+        },
+        {
+          "name": "Interval",
+          "min": 0,
+          "max": 1000,
+          "unit": "s",
+          "integer": true,
+          "mib_name": "siInterval"
+        },
+        {
+          "name": "Alignment",
+          "min": 0,
+          "max": 1000,
+          "unit": "s",
+          "integer": true,
+          "mib_name": "siAlignment"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "AGCMode": {
+      "name": "AGCMode",
+      "policy": "D",
+      "manual_pages": "96",
+      "fields": [
+        {
+          "name": "Band",
+          "enum": [
+            "L1",
+            "B3E6",
+            "L2",
+            "L5",
+            "LBand"
+          ],
+          "selector": true,
+          "mib_name": "amBand"
+        },
+        {
+          "name": "Mode",
+          "enum": [
+            "auto",
+            "frozen",
+            "manual"
+          ],
+          "mib_name": "amMode"
+        },
+        {
+          "name": "Gain",
+          "min": 0,
+          "max": 70,
+          "unit": "dB",
+          "mib_name": "amGain"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "BBSamplingMode": {
+      "name": "BBSamplingMode",
+      "policy": "D",
+      "manual_pages": "97",
+      "fields": [
+        {
+          "name": "Mode",
+          "enum": [
+            "BeforeIM",
+            "AfterIM"
+          ],
+          "mib_name": "bbsMode"
+        }
+      ],
+      "notes": "Requires receiver capability; this sets sampling mode only. No raw-sample capture or license bypass.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "ManualNotchFilter": {
+      "name": "ManualNotchFilter",
+      "policy": "D",
+      "manual_pages": "99",
+      "fields": [
+        {
+          "name": "Notch",
+          "enum": [
+            "Notch1",
+            "Notch2",
+            "Notch3"
+          ],
+          "selector": true,
+          "mib_name": "mnfNotch"
+        },
+        {
+          "name": "Enable",
+          "enum": [
+            "off",
+            "on"
+          ],
+          "mib_name": "mnfEnable"
+        },
+        {
+          "name": "CenterFreq",
+          "min": 1100,
+          "max": 1700,
+          "unit": "MHz",
+          "mib_name": "mnfCenterFreq"
+        },
+        {
+          "name": "Bandwidth",
+          "min": 45,
+          "max": 3000,
+          "unit": "kHz",
+          "mib_name": "mnfBandwidth"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "RFInterferenceMitigation": {
+      "name": "RFInterferenceMitigation",
+      "policy": "D",
+      "manual_pages": "100",
+      "fields": [
+        {
+          "name": "JammingClass",
+          "items": [
+            "Class1",
+            "Class2",
+            "none"
+          ],
+          "replacement_only": true,
+          "mib_name": "itmJammingClass"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "AntennaOffset": {
+      "name": "AntennaOffset",
+      "policy": "R",
+      "manual_pages": "101",
+      "fields": [
+        {
+          "name": "Antenna",
+          "enum": [
+            "Main"
+          ],
+          "selector": true,
+          "mib_name": "aoAntenna"
+        },
+        {
+          "name": "DeltaE",
+          "min": -1000,
+          "max": 1000,
+          "unit": "m",
+          "mib_name": "aoDeltaE"
+        },
+        {
+          "name": "DeltaN",
+          "min": -1000,
+          "max": 1000,
+          "unit": "m",
+          "mib_name": "aoDeltaN"
+        },
+        {
+          "name": "DeltaU",
+          "min": -1000,
+          "max": 1000,
+          "unit": "m",
+          "mib_name": "aoDeltaU"
+        },
+        {
+          "name": "Type",
+          "max_length": 20,
+          "mib_name": "aoType"
+        },
+        {
+          "name": "SerialNr",
+          "max_length": 20,
+          "mib_name": "aoSerialNr"
+        },
+        {
+          "name": "SetupID",
+          "min": 0,
+          "max": 255,
+          "unit": "",
+          "integer": true,
+          "mib_name": "aoSetupID"
+        }
+      ],
+      "notes": "Main ARP minus marker ENU; exact supported Type from lstAntennaInfo. No unrelated antenna substitution.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "DiffCorrMaxAge": {
+      "name": "DiffCorrMaxAge",
+      "policy": "D",
+      "manual_pages": "103",
+      "fields": [
+        {
+          "name": "DGNSSCorr",
+          "writable": false,
+          "mib_name": "dcaDGNSSCorr"
+        },
+        {
+          "name": "RTKCorr",
+          "writable": false,
+          "mib_name": "dcaRTKCorr"
+        },
+        {
+          "name": "PPPCorr",
+          "min": 0,
+          "max": 3600,
+          "unit": "s",
+          "mib_name": "dcaPPPCorr"
+        }
+      ],
+      "notes": "Only PPPCorr writable. Both this and global MaxAge limits apply. Zero disables PPP corrections.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "DiffCorrUsage": {
+      "name": "DiffCorrUsage",
+      "policy": "D",
+      "manual_pages": "104",
+      "fields": [
+        {
+          "name": "Mode",
+          "writable": false
+        },
+        {
+          "name": "MaxAge",
+          "min": 0.1,
+          "max": 3600,
+          "unit": "s"
+        },
+        {
+          "name": "BaseSelection",
+          "writable": false
+        },
+        {
+          "name": "BaseID",
+          "writable": false
+        },
+        {
+          "name": "MovingBase",
+          "writable": false
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "ElevationMask": {
+      "name": "ElevationMask",
+      "policy": "R",
+      "manual_pages": "105",
+      "fields": [
+        {
+          "name": "Engine",
+          "enum": [
+            "PVT",
+            "Tracking"
+          ],
+          "selector": true,
+          "mib_name": "emEngine"
+        },
+        {
+          "name": "Mask",
+          "min": -90,
+          "max": 90,
+          "unit": "deg",
+          "integer": true,
+          "mib_name": "emMask"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "IonosphereModel": {
+      "name": "IonosphereModel",
+      "policy": "D",
+      "manual_pages": "107",
+      "fields": [
+        {
+          "name": "Model",
+          "enum": [
+            "auto",
+            "off",
+            "KlobucharGPS",
+            "SBAS",
+            "MultiFreq",
+            "KlobucharBDS"
+          ],
+          "mib_name": "imModel"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "PVTMode": {
+      "name": "PVTMode",
+      "policy": "R",
+      "manual_pages": "111",
+      "fields": [
+        {
+          "name": "Mode",
+          "enum": [
+            "Static",
+            "Rover"
+          ],
+          "mib_name": "pmMode"
+        },
+        {
+          "name": "RoverMode",
+          "items": [
+            "StandAlone",
+            "SBAS",
+            "PPP"
+          ],
+          "replacement_only": true,
+          "mib_name": "pmRoverMode"
+        },
+        {
+          "name": "RefPos",
+          "enum": [
+            "auto",
+            "Geodetic1",
+            "Geodetic2",
+            "Geodetic3",
+            "Geodetic4",
+            "Geodetic5",
+            "Cartesian1",
+            "Cartesian2",
+            "Cartesian3",
+            "Cartesian4",
+            "Cartesian5"
+          ],
+          "mib_name": "pmRefPos"
+        }
+      ],
+      "notes": "Static support and retained HAS correction use require receiver verification; actual PVT mode is separate.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "ReceiverDynamics": {
+      "name": "ReceiverDynamics",
+      "policy": "R",
+      "manual_pages": "113",
+      "fields": [
+        {
+          "name": "Level",
+          "enum": [
+            "High",
+            "Moderate",
+            "Low"
+          ],
+          "mib_name": "rdLevel"
+        },
+        {
+          "name": "Motion",
+          "enum": [
+            "Static",
+            "Quasistatic",
+            "Pedestrian",
+            "Automotive",
+            "RaceCar",
+            "HeavyMachinery",
+            "UAV",
+            "Unlimited"
+          ],
+          "mib_name": "rdMotion"
+        }
+      ],
+      "notes": "Startup default Low,Static. Motion Static does not hard-fix PVT coordinates.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "SatelliteUsage": {
+      "name": "SatelliteUsage",
+      "policy": "D",
+      "manual_pages": "116",
+      "fields": [
+        {
+          "name": "Satellite",
+          "satellite_list": true,
+          "list_edits": true,
+          "mib_name": "suSatellite"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "SBASCorrections": {
+      "name": "SBASCorrections",
+      "policy": "R",
+      "manual_pages": "117",
+      "fields": [
+        {
+          "name": "Satellite",
+          "enum": [
+            "auto",
+            "EGNOS",
+            "WAAS",
+            "MSAS",
+            "GAGAN",
+            "SDCM",
+            "BDSBAS",
+            "KASS",
+            "ANGA",
+            "SouthPAN"
+          ],
+          "sbas": true,
+          "mib_name": "sbcSatellite"
+        },
+        {
+          "name": "SISMode",
+          "enum": [
+            "Operational",
+            "Test"
+          ],
+          "mib_name": "sbcSISMode"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "SignalUsage": {
+      "name": "SignalUsage",
+      "policy": "D",
+      "manual_pages": "119",
+      "fields": [
+        {
+          "name": "PVT",
+          "items": [
+            "GPSL1CA",
+            "GPSL2PY",
+            "GPSL2C",
+            "GPSL5",
+            "GPSL1C",
+            "GLOL1CA",
+            "GLOL2P",
+            "GLOL2CA",
+            "GLOL3",
+            "GALE1BC",
+            "GALE6BC",
+            "GALE5a",
+            "GALE5b",
+            "GALE5",
+            "BDSB1I",
+            "BDSB2I",
+            "BDSB3I",
+            "BDSB1C",
+            "BDSB2a",
+            "BDSB2b",
+            "QZSL1CA",
+            "QZSL2C",
+            "QZSL5",
+            "QZSL6",
+            "QZSL1C",
+            "QZSL1S",
+            "QZSL1CB",
+            "NAVICL5",
+            "all"
+          ],
+          "list_edits": true,
+          "mib_name": "nuPVT",
+          "list_remove": false
+        },
+        {
+          "name": "NavData",
+          "items": [
+            "GPSL1CA",
+            "GPSL2PY",
+            "GPSL2C",
+            "GPSL5",
+            "GPSL1C",
+            "GLOL1CA",
+            "GLOL2P",
+            "GLOL2CA",
+            "GLOL3",
+            "GALE1BC",
+            "GALE6BC",
+            "GALE5a",
+            "GALE5b",
+            "GALE5",
+            "GEOL1",
+            "GEOL5",
+            "BDSB1I",
+            "BDSB2I",
+            "BDSB3I",
+            "BDSB1C",
+            "BDSB2a",
+            "BDSB2b",
+            "QZSL1CA",
+            "QZSL2C",
+            "QZSL5",
+            "QZSL6",
+            "QZSL1C",
+            "QZSL1S",
+            "QZSL1CB",
+            "NAVICL5",
+            "all"
+          ],
+          "list_edits": true,
+          "mib_name": "nuNavData",
+          "list_remove": false
+        }
+      ],
+      "notes": "Preserve GALE6BC navigation decoding for HAS; PVT exclusions differ from NavData exclusions. Fitted G5-T 1.1.0 rejects relative removal (-); use a checked complete replacement. Relative addition remains available.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "StaticPosCartesian": {
+      "name": "StaticPosCartesian",
+      "policy": "R",
+      "manual_pages": "121",
+      "fields": [
+        {
+          "name": "Position",
+          "enum": [
+            "Cartesian1",
+            "Cartesian2",
+            "Cartesian3",
+            "Cartesian4",
+            "Cartesian5"
+          ],
+          "selector": true,
+          "mib_name": "spcPosition"
+        },
+        {
+          "name": "X",
+          "min": -8000000,
+          "max": 8000000,
+          "unit": "m",
+          "mib_name": "spcX"
+        },
+        {
+          "name": "Y",
+          "min": -8000000,
+          "max": 8000000,
+          "unit": "m",
+          "mib_name": "spcY"
+        },
+        {
+          "name": "Z",
+          "min": -8000000,
+          "max": 8000000,
+          "unit": "m",
+          "mib_name": "spcZ"
+        },
+        {
+          "name": "Datum",
+          "enum": [
+            "WGS84",
+            "ETRS89",
+            "NAD83",
+            "NAD83_PA",
+            "NAD83_MA",
+            "GDA94",
+            "GDA2020",
+            "User1",
+            "User2",
+            "Other"
+          ],
+          "mib_name": "spcDatum"
+        }
+      ],
+      "notes": "ARP ECEF coordinates; retain frame, epoch, antenna and provenance in the host experiment record.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "StaticPosGeodetic": {
+      "name": "StaticPosGeodetic",
+      "policy": "R",
+      "manual_pages": "123",
+      "fields": [
+        {
+          "name": "Position",
+          "enum": [
+            "Geodetic1",
+            "Geodetic2",
+            "Geodetic3",
+            "Geodetic4",
+            "Geodetic5"
+          ],
+          "selector": true,
+          "mib_name": "spgPosition"
+        },
+        {
+          "name": "Latitude",
+          "min": -90,
+          "max": 90,
+          "unit": "deg",
+          "mib_name": "spgLatitude"
+        },
+        {
+          "name": "Longitude",
+          "min": -180,
+          "max": 180,
+          "unit": "deg",
+          "mib_name": "spgLongitude"
+        },
+        {
+          "name": "Altitude",
+          "min": -1000,
+          "max": 30000,
+          "unit": "ellipsoidal m",
+          "mib_name": "spgAltitude"
+        },
+        {
+          "name": "Datum",
+          "enum": [
+            "WGS84",
+            "ETRS89",
+            "NAD83",
+            "NAD83_PA",
+            "NAD83_MA",
+            "GDA94",
+            "GDA2020",
+            "User1",
+            "User2",
+            "Other"
+          ],
+          "mib_name": "spgDatum"
+        }
+      ],
+      "notes": "ARP degrees and ellipsoidal meters, not SBF radians or MSL height.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "TroposphereModel": {
+      "name": "TroposphereModel",
+      "policy": "D",
+      "manual_pages": "124",
+      "fields": [
+        {
+          "name": "ZenithModel",
+          "enum": [
+            "off",
+            "Saastamoinen",
+            "MOPS"
+          ],
+          "mib_name": "tmZenithModel"
+        },
+        {
+          "name": "MappingModel",
+          "enum": [
+            "Niell",
+            "MOPS"
+          ],
+          "mib_name": "tmMappingModel"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "TroposphereParameters": {
+      "name": "TroposphereParameters",
+      "policy": "D",
+      "manual_pages": "126",
+      "fields": [
+        {
+          "name": "Temperature",
+          "min": -100,
+          "max": 100,
+          "unit": "degC MSL-referenced",
+          "mib_name": "tpTemperature"
+        },
+        {
+          "name": "Pressure",
+          "min": 800,
+          "max": 1500,
+          "unit": "hPa MSL-referenced",
+          "mib_name": "tpPressure"
+        },
+        {
+          "name": "Humidity",
+          "min": 0,
+          "max": 100,
+          "unit": "%",
+          "mib_name": "tpHumidity"
+        }
+      ],
+      "notes": "MSL-referenced meteorological inputs for Saastamoinen; not OCXO/PCB temperature.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "GalOSNMAUsage": {
+      "name": "GalOSNMAUsage",
+      "policy": "D",
+      "manual_pages": "129",
+      "fields": [
+        {
+          "name": "PVTLevel",
+          "enum": [
+            "off",
+            "loose",
+            "strict"
+          ],
+          "mib_name": "ouPVTLevel"
+        },
+        {
+          "name": "MTRoot",
+          "writable": false,
+          "mib_name": "ouMTRoot"
+        },
+        {
+          "name": "MeasLevel",
+          "enum": [
+            "off",
+            "loose"
+          ],
+          "mib_name": "ouMeasLevel"
+        }
+      ],
+      "notes": "No Merkle-root override. Strict requires independent trusted time.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "SignalAuthentication": {
+      "name": "SignalAuthentication",
+      "policy": "D",
+      "manual_pages": "131",
+      "fields": [
+        {
+          "name": "Level",
+          "enum": [
+            "Detection",
+            "Mitigation"
+          ],
+          "mib_name": "naLevel"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "GeodeticDatum": {
+      "name": "GeodeticDatum",
+      "policy": "D",
+      "manual_pages": "134",
+      "fields": [
+        {
+          "name": "TargetDatum",
+          "enum": [
+            "WGS84",
+            "ETRS89",
+            "NAD83",
+            "NAD83_PA",
+            "NAD83_MA",
+            "GDA94",
+            "GDA2020",
+            "User1",
+            "User2",
+            "Default"
+          ],
+          "mib_name": "gdTargetDatum"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "ClockSyncThreshold": {
+      "name": "ClockSyncThreshold",
+      "policy": "D",
+      "manual_pages": "139",
+      "fields": [
+        {
+          "name": "Threshold",
+          "enum": [
+            "ClockSteering",
+            "usec500"
+          ],
+          "mib_name": "cstThreshold"
+        },
+        {
+          "name": "StartupSync",
+          "enum": [
+            "off",
+            "on"
+          ],
+          "mib_name": "cstStartupSync"
+        }
+      ],
+      "notes": "Receiver steering is a separate loop. StartupSync takes effect on reset. Current startup policy is restored only by explicit gnss auto or MCU boot.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "HoldoverTrigger": {
+      "name": "HoldoverTrigger",
+      "policy": "R",
+      "manual_pages": "141",
+      "fields": [
+        {
+          "name": "AuthAlert",
+          "enum": [
+            "off",
+            "on"
+          ],
+          "mib_name": "htAuthAlert"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "PPSParameters": {
+      "name": "PPSParameters",
+      "policy": "R",
+      "manual_pages": "143",
+      "fields": [
+        {
+          "name": "Interval",
+          "enum": [
+            "off",
+            "sec1"
+          ],
+          "mib_name": "ppsInterval"
+        },
+        {
+          "name": "Polarity",
+          "enum": [
+            "Low2High",
+            "High2Low"
+          ],
+          "mib_name": "ppsPolarity"
+        },
+        {
+          "name": "Delay",
+          "min": -1000000,
+          "max": 1000000,
+          "unit": "ns",
+          "mib_name": "ppsDelay"
+        },
+        {
+          "name": "TimeScale",
+          "enum": [
+            "GPS",
+            "Galileo",
+            "BeiDou",
+            "GLONASS",
+            "UTC",
+            "RxClock"
+          ],
+          "mib_name": "ppsTimeScale"
+        },
+        {
+          "name": "MaxHoldover",
+          "min": 0,
+          "max": 3600,
+          "unit": "s",
+          "integer": true,
+          "mib_name": "ppsMaxHoldover"
+        },
+        {
+          "name": "PulseWidth",
+          "min": 1e-06,
+          "max": 1000,
+          "unit": "ms",
+          "mib_name": "ppsPulseWidth"
+        }
+      ],
+      "notes": "PPS1 drives all eight outputs. Positive delay advances edge; holdover 0 is indefinite. Only off/1 Hz exposed.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "TimingSystem": {
+      "name": "TimingSystem",
+      "policy": "D",
+      "manual_pages": "146",
+      "fields": [
+        {
+          "name": "System",
+          "enum": [
+            "Galileo",
+            "GPS",
+            "BeiDou",
+            "auto"
+          ],
+          "mib_name": "tsSystem"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "MarkerParameters": {
+      "name": "MarkerParameters",
+      "policy": "R",
+      "manual_pages": "147",
+      "fields": [
+        {
+          "name": "MarkerName",
+          "max_length": 60,
+          "mib_name": "mpMarkerName"
+        },
+        {
+          "name": "MarkerNumber",
+          "max_length": 20,
+          "mib_name": "mpMarkerNumber"
+        },
+        {
+          "name": "MarkerType",
+          "max_length": 20,
+          "mib_name": "mpMarkerType"
+        },
+        {
+          "name": "StationCode",
+          "max_length": 10,
+          "mib_name": "mpStationCode"
+        },
+        {
+          "name": "MonumentIdx",
+          "min": 0,
+          "max": 9,
+          "unit": "",
+          "integer": true,
+          "mib_name": "mpMonumentIdx"
+        },
+        {
+          "name": "ReceiverIdx",
+          "min": 0,
+          "max": 9,
+          "unit": "",
+          "integer": true,
+          "mib_name": "mpReceiverIdx"
+        },
+        {
+          "name": "CountryCode",
+          "max_length": 3,
+          "mib_name": "mpCountryCode"
+        }
+      ],
+      "notes": "",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "NMEAOutput": {
+      "name": "NMEAOutput",
+      "policy": "D",
+      "manual_pages": "160",
+      "fields": [
+        {
+          "name": "Stream",
+          "enum": [
+            "Stream3"
+          ],
+          "selector": true,
+          "mib_name": "noStream"
+        },
+        {
+          "name": "Cd",
+          "enum": [
+            "COM1"
+          ],
+          "mib_name": "noCd"
+        },
+        {
+          "name": "Messages",
+          "enum": [
+            "GSV",
+            "none"
+          ],
+          "mib_name": "noMessages"
+        },
+        {
+          "name": "Interval",
+          "enum": [
+            "sec5",
+            "sec10",
+            "sec30",
+            "sec60",
+            "off"
+          ],
+          "mib_name": "noInterval"
+        }
+      ],
+      "notes": "Stream3 GSV only at 5 s or slower; other transport routing is firmware-owned.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    },
+    "SBFOutput": {
+      "name": "SBFOutput",
+      "policy": "R",
+      "manual_pages": "168",
+      "fields": [
+        {
+          "name": "Stream",
+          "enum": [
+            "Stream3"
+          ],
+          "selector": true,
+          "mib_name": "soStream"
+        },
+        {
+          "name": "Cd",
+          "enum": [
+            "COM1"
+          ],
+          "mib_name": "soCd"
+        },
+        {
+          "name": "Messages",
+          "items": [
+            "PVTGeodetic",
+            "PVTCartesian",
+            "PosCovCartesian",
+            "VelCovCartesian",
+            "DOP",
+            "SatVisibility",
+            "ChannelStatus",
+            "RFStatus",
+            "GALAuthStatus",
+            "ReceiverStatus",
+            "ReceiverTime",
+            "ReceiverSetup",
+            "InputLink",
+            "OutputLink",
+            "EndOfPVT",
+            "QualityInd",
+            "xPPSOffset",
+            "RxMessage",
+            "GALGstGps",
+            "none"
+          ],
+          "replacement_only": true,
+          "max_items": 4,
+          "mib_name": "soMessages"
+        },
+        {
+          "name": "Interval",
+          "enum": [
+            "sec5",
+            "sec10",
+            "sec30",
+            "sec60",
+            "off"
+          ],
+          "mib_name": "soInterval"
+        }
+      ],
+      "notes": "Stream3 only, max four approved blocks at 5 s or slower. Stream1 remains firmware-owned. Existing USB SBF records contain bounded prefixes, not full raw blocks.",
+      "persistence": "Verified edits automatically saved to receiver Boot; failures remain held and are reported"
+    }
+  }
+}

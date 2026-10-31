@@ -1,0 +1,13 @@
+{
+  "name": "Arm GNU Toolchain",
+  "version": "14.3.Rel1",
+  "host": "Windows x86_64 (mingw-w64-i686 package)",
+  "target": "arm-none-eabi",
+  "archive": "arm-gnu-toolchain-14.3.rel1-mingw-w64-i686-arm-none-eabi.zip",
+  "sourceUrl": "https://developer.arm.com/-/media/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-14.3.rel1-mingw-w64-i686-arm-none-eabi.zip",
+  "sha256Url": "https://developer.arm.com/-/media/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-14.3.rel1-mingw-w64-i686-arm-none-eabi.zip.sha256asc",
+  "sha256": "836ebe51fd71b6542dd7884c8fb2011192464b16c28e4b38fddc9350daba5ee8",
+  "installRoot": ".tools/arm-gnu-toolchain-14.3.rel1",
+  "compilerRelativePath": "bin/arm-none-eabi-gcc.exe",
+  "gccVersion": "14.3.1 20250623 (Arm GNU Toolchain 14.3.Rel1 Build arm-14.174)"
+}
