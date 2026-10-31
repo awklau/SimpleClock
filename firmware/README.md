@@ -48,6 +48,14 @@ flash, 19 KiB static RAM, 4 KiB stack) and keeps the last two flash pages
 (`0x0801F000`, 4 KiB) for saved settings. To flash a board, see
 [first flashing](../docs/FIRST_FLASHING.md).
 
+Builds are reproducible: with Arm GNU Toolchain 14.3.Rel1, Linux and Windows
+produce byte-identical images, so you can check a release image by rebuilding
+it and comparing SHA-256 sums. Release images are built on Linux. On macOS the
+bridge and board-check images are also identical, but the normal firmware is
+not: the macOS toolchain package links a few maths-library functions (`sqrt`,
+`fmin`, `fmax`) in a different order. The code is the same; only their
+placement in flash differs.
+
 ## Configuration
 
 `default_parameters.json` holds the controller defaults and limits (loop time
