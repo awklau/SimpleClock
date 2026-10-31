@@ -67,6 +67,10 @@ python tools/generate-hybrid-defaults.py
 python tools/generate-hybrid-defaults.py --check
 ```
 
+The release version lives in `core/include/simpleclock/version.h`; the firmware
+reports it as `version=` in its `resources` and `hybrid_config` records. Change
+it there when tagging a release.
+
 Values changed at run time over USB (`hybrid params`, `hybrid save`) override
 the compiled defaults; see [COMMANDS](docs/COMMANDS.md).
 

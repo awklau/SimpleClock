@@ -34,7 +34,7 @@ one's reply.
 
 | Command | Effect |
 | --- | --- |
-| `hybrid status`, `hybrid config` | Send the status and configuration records now. |
+| `hybrid status`, `hybrid config` | Send the status and configuration records now; `hybrid_config` includes the firmware `version`. |
 | `hybrid hold` | Stop steering; the oscillator keeps its current trim. Heater unaffected. |
 | `hybrid resume` | Clear a hold (and an acquisition fault); requalify, then steer. |
 | `hybrid params ppp\|sbas\|standalone\|static <Tf> <Tphi>` | Loop pair for one solution type, whole seconds, 0 (off) or 10–86400. Live; not saved. `hybrid params <Tf> <Tphi>` sets PPP. |
@@ -172,7 +172,7 @@ are not an atomic snapshot and need not appear exactly once per second.
 | `clock_actuator` | `applied_nppb`, `requested_nppb`, `readback_fcw`, `commanded_fcw`, `pending`, `known`, `writes`, `limiting`, `slew_limited`, `phase_limited`, `tx_drops`, `command_denied` |
 | `clock_guard` v2 | `clipped`, `clipped_samples`, `innovation_ps`, `lock_failures` (bits below), `reanchors`, `reanchor_total_ps`, `bridged_gaps`, `bridged_epochs`, `gnss_usable`, `thermal_warning` |
 | `hybrid_quality` | `reason`, frequency-monitor statistics (`frequency_mean_drift_nppb`, `frequency_sd_nppb`, …), window statistics, `receiver_config_ready`, `receiver_config_fault` |
-| `hybrid_config` v4 | `loop_mode`, all eight loop times (`ppp_fll_time_s` … `static_phase_time_s`), `bias_clip_ps`, `pps_policy`, `gnss_selection`, `settings_saved`, `settings_dirty`, `settings_generation`, `settings_fault` |
+| `hybrid_config` v4 | `version` (firmware release), `loop_mode`, all eight loop times (`ppp_fll_time_s` … `static_phase_time_s`), `bias_clip_ps`, `pps_policy`, `gnss_selection`, `settings_saved`, `settings_dirty`, `settings_generation`, `settings_fault` |
 | `gnss_dop` | receiver `tdop_x100`, `nr_sv`, `valid`, `age_ms` (information only, never a control input) |
 
 States: 2 QUALIFY, 3 ACQUIRE_FREQUENCY, 4 VERIFY_FREQUENCY, 5 TRACK,
@@ -224,7 +224,7 @@ States: 2 QUALIFY, 3 ACQUIRE_FREQUENCY, 4 VERIFY_FREQUENCY, 5 TRACK,
 | `gnss_pps` | `policy`, `policy_valid`, `enabled`, `pending`, `fault`, `time_quality` (GNSS_VALID / HOLDOVER / FREE_RUNNING) |
 | `epoch` | One assembled receiver epoch: `week`, `tow_ms`, `mode`, `time_system`, ages, `bias_bits`/`drift_bits` (raw IEEE hex), receiver status and error |
 | `timing_status` | PPS capture and epoch-assembly counters |
-| `resources` | Firmware profile, stack high-water mark, `guard`, `loop_gap_ms`, `reset_flags`, LED states |
+| `resources` | Firmware `profile` and `version`, stack high-water mark, `guard`, `loop_gap_ms`, `reset_flags`, LED states |
 | `ocxo_probe` | Oscillator register read-back (`fcw_m/n/l`, `id`, `clip`, `oe`) |
 
 Receiver error 2048 (OUTOFFENCE) is the receiver's motion/geographic

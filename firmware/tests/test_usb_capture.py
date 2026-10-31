@@ -28,14 +28,18 @@ LINES = (
 class FakePort:
     """Deliver the lines split across reads; record writes."""
 
-    def __init__(self):
+    def __init__(self, stop_file=None):
+        self.stop_file = stop_file  # Created once every chunk has been delivered.
         data = b"".join(LINES)
         self.chunks = [data[i : i + 37] for i in range(0, len(data), 37)]
         self.written = []
         self.closed = False
 
     def read(self, size):
-        return self.chunks.pop(0) if self.chunks else b""
+        chunk = self.chunks.pop(0) if self.chunks else b""
+        if not self.chunks and self.stop_file is not None:
+            self.stop_file.touch()
+        return chunk
 
     def write(self, data):
         self.written.append(data)
@@ -47,8 +51,9 @@ class FakePort:
 
 class CaptureTests(unittest.TestCase):
     def test_capture_round_trips_through_analysis(self):
-        port = FakePort()
         with tempfile.TemporaryDirectory() as directory:
+            stop = Path(directory) / "stop"
+            port = FakePort(stop)  # Ends the capture when its data runs out.
             output = Path(directory) / "run"
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
@@ -59,7 +64,9 @@ class CaptureTests(unittest.TestCase):
                         "--output",
                         str(output),
                         "--seconds",
-                        "0.3",
+                        "60",
+                        "--stop-file",
+                        str(stop),
                         "--command",
                         "hybrid config",
                     ],

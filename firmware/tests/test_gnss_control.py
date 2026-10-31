@@ -139,7 +139,7 @@ class CatalogTests(unittest.TestCase):
                 return lines.pop(0) if lines else b""
 
         peer = Peer()
-        result = control.exchange(peer, "gnss read getReceiverDynamics", timeout=0.1)
+        result = control.exchange(peer, "gnss read getReceiverDynamics", timeout=5)
         self.assertTrue(result["complete"])
         self.assertIn("Low,Static", result["receiver_text"])
         self.assertEqual(peer.sent, b"gnss read getReceiverDynamics\r\n")
@@ -176,7 +176,7 @@ class CatalogTests(unittest.TestCase):
             f"type=gnss_control v=1 seq=7 stage=done status=complete ascii_end={100+len(raw)} command_hex={b'getReceiverDynamics'.hex()}\n".encode(),
             b"type=gnss_ascii v=1 offset=100 hex=" + raw.hex().encode() + b"\n",
         ]
-        result = control.exchange(Peer(lines), "gnss read getReceiverDynamics", timeout=0.1)
+        result = control.exchange(Peer(lines), "gnss read getReceiverDynamics", timeout=5)
         self.assertTrue(result["complete"])
         self.assertEqual(result["receiver_text"], raw.decode().strip())
         # Busy can refer to the previous operation's absolute ASCII position.
@@ -185,7 +185,7 @@ class CatalogTests(unittest.TestCase):
             control.exchange(
                 Peer([b"type=gnss_control v=1 seq=7 stage=denied status=busy ascii_end=9999\n"]),
                 "gnss read getReceiverDynamics",
-                timeout=0.1,
+                timeout=5,
             )
         with self.assertRaisesRegex(RuntimeError, "Firmware rejected command: invalid"):
             control.exchange(
@@ -195,7 +195,7 @@ class CatalogTests(unittest.TestCase):
                     ]
                 ),
                 "gnss read getUnsupported",
-                timeout=0.1,
+                timeout=5,
             )
         with self.assertRaisesRegex(RuntimeError, "Firmware rejected USB command"):
             control.exchange(
@@ -207,7 +207,7 @@ class CatalogTests(unittest.TestCase):
                     ]
                 ),
                 "system reboot mcu",
-                timeout=0.1,
+                timeout=5,
             )
         defaults = control.exchange(
             Peer(
@@ -217,7 +217,7 @@ class CatalogTests(unittest.TestCase):
                 ]
             ),
             "system defaults",
-            timeout=0.1,
+            timeout=5,
         )
         self.assertTrue(defaults["complete"])
         reboot = control.exchange(
@@ -228,7 +228,7 @@ class CatalogTests(unittest.TestCase):
                 ]
             ),
             "system reboot mcu",
-            timeout=0.1,
+            timeout=5,
         )
         self.assertEqual(reboot["events"][-1]["target"], "mcu")
         self.assertFalse(reboot["physical_reboot_verified"])

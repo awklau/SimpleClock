@@ -5,6 +5,7 @@
 #include "main.h"
 #include "simpleclock/sit5801.h"
 #include "simpleclock/text.h"
+#include "simpleclock/version.h"
 #include "gnss_probe.h"
 #include "timing_probe.h"
 #ifdef SIMPLECLOCK_ACTUATOR_TEST
@@ -206,6 +207,7 @@ static void report_resources(uint32_t now_ms)
 #else
     sc_text_string(&text, "type=resources v=1 profile=M3_PPS_E6_PROBE");
 #endif
+    sc_text_string(&text, " version=" SC_FIRMWARE_VERSION);
     append_u32_field(&text, " uptime_ms=", now_ms);
     append_u32_field(&text, " core_hz=", SystemCoreClock);
     append_u32_field(&text, " flash_kib=", *(const uint16_t *)FLASHSIZE_BASE);

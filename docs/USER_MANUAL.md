@@ -143,7 +143,7 @@ command text in hexadecimal. A sent command is not done until that reply says
 
 | Command | Effect |
 | --- | --- |
-| `hybrid status`, `hybrid config` | Report state and settings now |
+| `hybrid status`, `hybrid config` | Report state and settings now; `hybrid config` shows the firmware `version=` |
 | `hybrid hold` | Stop steering at the current trim (heater keeps running) |
 | `hybrid resume` | Resume steering; requalifies first |
 | `hybrid params <type> <Tf> <Tphi>` | Change one loop pair (section 4) |

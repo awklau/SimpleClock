@@ -12,6 +12,7 @@
 #include "simpleclock/hybrid_input.h"
 #include "simpleclock/thermal_outer.h"
 #include "simpleclock/text.h"
+#include "simpleclock/version.h"
 #include <math.h>
 #include <string.h>
 
@@ -500,8 +501,9 @@ static bool report(uint32_t now_ms, uint32_t part)
         gnss_probe_pps_snapshot_t pps = {0};
         const bool pps_known = gnss_probe_pps_snapshot(&pps);
         const uint32_t policy = gnss_probe_pps_policy();
-        /* v4 adds the Static-PVT pair. */
-        sc_text_string(&t, "type=hybrid_config v=4 phase_mode=RELATIVE_FIXED pps_policy=");
+        /* v4 adds the Static-PVT pair; version= (from 1.0.0-rc.1) is the release. */
+        sc_text_string(&t, "type=hybrid_config v=4 version=" SC_FIRMWARE_VERSION
+                           " phase_mode=RELATIVE_FIXED pps_policy=");
         sc_text_string(&t, policy <= SC_SETTINGS_PPS_MANUAL ? policies[policy] : "UNKNOWN");
         sc_text_string(&t, " pps_config_hex=");
         for (const char *p = pps.response; *p; p++)

@@ -8,6 +8,7 @@
 #include "simpleclock/sit5801.h"
 #include "simpleclock/timing.h"
 #include "simpleclock/thermal_outer.h"
+#include "simpleclock/version.h"
 #include "thermal_probe.h"
 #include "settings_flash.h"
 #include <math.h>
@@ -258,9 +259,10 @@ static bool fake_send(const uint8_t *data, uint16_t length)
         {
             report_type_mask |= 8U;
         }
-        if (strstr(captured, "type=hybrid_config") != NULL)
+        if (strstr(captured, "type=hybrid_config") != NULL &&
+            strstr(captured, " version=" SC_FIRMWARE_VERSION " ") != NULL)
         {
-            report_type_mask |= 16U;
+            report_type_mask |= 16U; /* Counted only with the release version. */
         }
     }
     report_count++;
