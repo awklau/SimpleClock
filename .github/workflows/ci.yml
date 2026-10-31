@@ -154,3 +154,13 @@ jobs:
 
       - name: Report image hashes
         run: shasum -a 256 build/stm32c071-*/artifacts/*.bin
+
+      - name: Upload images
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.os }}
+          path: |
+            firmware/build/stm32c071-*/artifacts/*.bin
+            firmware/build/stm32c071-*/artifacts/*.elf
+            firmware/build/stm32c071-*/artifacts/*.map
+          retention-days: 30
