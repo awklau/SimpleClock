@@ -1,0 +1,4 @@
+Record=TopLevelDocument|FileName=clocks.SchDoc|SheetNumber=3
+Record=NoMainPathDocument|SourceDocument=clocks.SchDoc|FileName=MCU.SchDoc|SheetNumber=2
+Record=NoMainPathDocument|SourceDocument=clocks.SchDoc|FileName=Output_Distribute.SchDoc|SheetNumber=4
+Record=NoMainPathDocument|SourceDocument=clocks.SchDoc|FileName=Power_IO.SchDoc|SheetNumber=1

@@ -5,3 +5,15 @@
 
 # Keep imported vendor sources byte-identical to upstream.
 /firmware/vendor/st/** -text
+
+# Altium design files and production outputs: store exactly as generated.
+/hardware/** -text
+*.PrjPcb binary
+*.SchDoc binary
+*.PcbDoc binary
+*.SchLib binary
+*.SCHLIB binary
+*.PcbLib binary
+*.BomDoc binary
+*.OutJob binary
+*.zip binary
