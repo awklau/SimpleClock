@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Supplied Epoch digital guide rev 0.32, pp. 1-4, 8-9. */
+/* Register map and FCW format: SiTime SiT58xx/SiT71xx digital control documentation. */
 #define SIT5801_ADDRESS_7BIT 0x50U
 #define SIT5801_READ_GAP_MS 50U
 #define SIT5801_FCW_MAX INT64_C(274877906943)

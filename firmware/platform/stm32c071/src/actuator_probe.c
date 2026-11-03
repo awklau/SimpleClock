@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Bounded M6 experiment. No servo, no persistent receiver/oscillator settings.
- * SiTime Epoch digital guide rev0.32 pp4/8: read gap >=50ms; 0C,0D,0E
+ * SiTime SiT58xx/SiT71xx digital control documentation: read gap >=50ms; 0C,0D,0E
  * write order, with 0E committing the change. Bus reads stay in clock_probe. */
 #include "actuator_probe.h"
 #include "main.h"

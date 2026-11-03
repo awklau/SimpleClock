@@ -70,3 +70,9 @@ GitHub's "Cite this repository" button uses [CITATION.cff](CITATION.cff).
   [`hardware/LICENSE`](hardware/LICENSE).
 - Third-party sources under `firmware/vendor/` keep their own licences; see
   [firmware/vendor/README.md](firmware/vendor/README.md).
+
+## Trademarks
+
+SiTime, Septentrio, mosaic, STMicroelectronics, STM32 and other product names
+are trademarks of their respective owners. SimpleClock is not affiliated with
+or endorsed by them; the names only identify the parts the board uses.
