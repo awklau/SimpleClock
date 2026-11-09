@@ -45,9 +45,8 @@ The firmware can also be built from source: see [firmware/](firmware/README.md).
 
 ## Status
 
-<!-- TODO: release version and hardware-test summary before publishing. -->
-Firmware release `<version>`. The control and flashing procedures have been
-run on three boards. Tools run on Windows, Linux and macOS; the hardware
+Firmware release `0.0.0`, for board revision 00 (prototype). The control and
+flashing procedures have been run on three boards. Tools run on Windows, Linux and macOS; the hardware
 procedures have so far been carried out on Windows.
 
 Receiver-derived telemetry and LEDs describe the clock as seen by its own
@@ -58,16 +57,17 @@ measured performance, see the paper below.
 
 If you use SimpleClock, please cite:
 
-<!-- TODO: paper reference and DOI; keep CITATION.cff in step. -->
-> `<authors>`, "`<title>`", `<venue>`, `<year>`. DOI: `<doi>`
+<!-- TODO: paper title, venue, year and DOI; keep CITATION.cff in step. -->
+> A. W. K. Lau, B. Pollarolo and J. Mena-Parra, "`<title>`", `<venue>`, `<year>`. DOI: `<doi>`
 
 GitHub's "Cite this repository" button uses [CITATION.cff](CITATION.cff).
 
 ## Licences
 
 - Firmware and software: [MIT](LICENSE).
-- Hardware design files: <!-- TODO: chosen CERN-OHL variant --> see
-  [`hardware/LICENSE`](hardware/LICENSE).
+- Hardware design files: CERN Open Hardware Licence Version 2 – Strongly
+  Reciprocal ([CERN-OHL-S-2.0](hardware/LICENSE)).
+- Copyright © 2026 Albert Wai Kit Lau.
 - Third-party sources under `firmware/vendor/` keep their own licences; see
   [firmware/vendor/README.md](firmware/vendor/README.md).
 

@@ -57,5 +57,18 @@ the Altium project before ordering; nothing else depends on the stackup.
 
 ## Licence
 
-<!-- TODO: hardware licence, pending -->
-See [LICENSE](LICENSE).
+Copyright © 2026 Albert Wai Kit Lau.
+
+This source describes Open Hardware and is licensed under the CERN-OHL-S v2.
+You may redistribute and modify it under the terms of the
+[CERN-OHL-S v2](LICENSE) (https://ohwr.org/cern_ohl_s_v2.txt).
+
+This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING
+OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE.
+Please see the CERN-OHL-S v2 for applicable conditions.
+
+Source location: https://github.com/awklau/SimpleClock
+
+As required by the licence, anyone who makes products from this design must
+keep this notice and make their own modified source available under the same
+licence.
