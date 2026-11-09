@@ -471,12 +471,13 @@ int main(void)
 {
     /* A partial transaction can decode to an in-hardware-range word outside
      * the automatic boot span. Two reads must not expand that envelope. */
+    const double span = SC_HYBRID_CLOCK_AUTOMATIC_TOTAL_SPAN_ABOUT_BOOT_READBACK_PPB;
     sc_hybrid_t bounded;
     sc_hybrid_init(&bounded);
     legacy_profiles(&bounded);
     sc_hybrid_observed(&bounded, true, 0, 32U, 1000U);
     int64_t outside = 0;
-    CHECK(sit5801_ppb_to_fcw(11.0, &outside));
+    CHECK(sit5801_ppb_to_fcw(span + 1.0, &outside));
     sc_hybrid_observed(&bounded, false, 0, 32U, 2000U);
     sc_hybrid_observed(&bounded, true, outside, 32U, 3000U);
     sc_hybrid_observed(&bounded, true, outside, 32U, 4000U);
@@ -488,18 +489,18 @@ int main(void)
         legacy_profiles(&bounded);
         sc_hybrid_observed(&bounded, true, 0, 32U, 1000U);
         int64_t endpoint = 0;
-        CHECK(sit5801_ppb_to_fcw((double)sign * 10.0, &endpoint));
-        if (sit5801_fcw_to_ppb(endpoint) < -10.0)
+        CHECK(sit5801_ppb_to_fcw((double)sign * span, &endpoint));
+        if (sit5801_fcw_to_ppb(endpoint) < -span)
         {
             endpoint++;
         }
-        if (sit5801_fcw_to_ppb(endpoint) > 10.0)
+        if (sit5801_fcw_to_ppb(endpoint) > span)
         {
             endpoint--;
         }
         bounded.applied_word = endpoint;
         bounded.applied_ppb = sit5801_fcw_to_ppb(endpoint);
-        bounded.acquire_target_ppb = (double)sign * 10.0;
+        bounded.acquire_target_ppb = (double)sign * span;
         bounded.state = SC_HYBRID_ACQUIRE;
         bounded.gnss_good = true;
         bounded.last_received_ms = bounded.observed_ms = 2000U;

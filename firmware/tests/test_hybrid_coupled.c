@@ -63,7 +63,7 @@ static int16_t raw128(double celsius)
 static uint16_t word_clip(void)
 {
     /* The test uses a 32 ppb receiver clip, like the default synthetic clock
-     * fixtures; it is deliberately wider than the 10 ppb boot envelope. */
+     * fixtures; it is deliberately wide. */
     return 32U;
 }
 

@@ -110,7 +110,8 @@ interrupt-masked snapshots.
 - **Watchdog:** a 2 s independent watchdog is fed only by the main loop, and
   only while the loop gap stays ≤ 500 ms and the stack guard is intact. A
   reset leaves the OCXO at its last frequency word; the clock then requalifies.
-- **Oscillator:** trim stays within ±10 ppb of the value read at boot, moves at
+- **Oscillator:** trim stays within ±1000 ppb of the value read at boot and within ±1 ppb
+  (FLL) or ±10 ppb (phase-only) of the last acquired trim, moves at
   most 0.003 ppb/s while tracking, and is only accepted after read-back.
 - **Settings:** saved as a CRC-protected record in alternating flash pages,
   committed by a final write, so a power loss during a save keeps the previous

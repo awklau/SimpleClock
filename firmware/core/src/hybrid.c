@@ -12,6 +12,7 @@
 #define LOCK_DWELL_MS ((uint32_t)(CFG(LOCK_GOOD_DWELL_S) * 1000.0))
 #define PHASE_DWELL_MS ((uint32_t)(CFG(PHASE_QUALIFICATION_S) * 1000.0))
 #define GAP_BRIDGE_MS ((uint32_t)(CFG(SHORT_GAP_BRIDGE_S) * 1000.0))
+#define SETTLE_MS ((uint32_t)(CFG(PPP_RETURN_SETTLE_S) * 1000.0))
 /* Arrival slack beyond the receiver interval, as for one contiguous epoch. */
 #define ARRIVAL_SLACK_MS (DATA_TIMEOUT_MS - 1000U)
 
@@ -104,7 +105,20 @@ static sc_hybrid_profile_t active_profile(const sc_hybrid_t *s)
                                                         : SC_HYBRID_PROFILE_PPP;
 }
 
-double sc_hybrid_frequency_time(const sc_hybrid_t *s)
+/* Below the primary solution, or settling after a return to PPP, the bias is
+ * not trusted (mode jumps of 4-13 ns, PPP re-convergence of tens of ns) while
+ * the drift is: frequency loop only, one time constant for every source. */
+static bool drift_only(const sc_hybrid_t *s)
+{
+    return s->fallback || s->settling;
+}
+
+static unsigned solution_rank(uint8_t mode)
+{
+    return mode == SC_SBF_PVT_MODE_PPP ? 3U : mode == SC_SBF_PVT_MODE_SBAS ? 2U : mode ? 1U : 0U;
+}
+
+static double pair_frequency_time(const sc_hybrid_t *s)
 {
     const sc_hybrid_profile_t profile = active_profile(s);
     return profile == SC_HYBRID_PROFILE_STANDALONE ? s->standalone_frequency_time_s
@@ -113,13 +127,28 @@ double sc_hybrid_frequency_time(const sc_hybrid_t *s)
                                                    : s->frequency_time_s;
 }
 
-double sc_hybrid_phase_time(const sc_hybrid_t *s)
+static double pair_phase_time(const sc_hybrid_t *s)
 {
     const sc_hybrid_profile_t profile = active_profile(s);
     return profile == SC_HYBRID_PROFILE_STANDALONE ? s->standalone_phase_time_s
            : profile == SC_HYBRID_PROFILE_STATIC   ? s->static_phase_time_s
            : profile == SC_HYBRID_PROFILE_SBAS     ? s->sbas_phase_time_s
                                                    : s->phase_time_s;
+}
+
+/* A 0/0 pair means "never steer on this solution type", in a fallback and
+ * while settling too: the trim is held for as long as the receiver reports it. */
+double sc_hybrid_frequency_time(const sc_hybrid_t *s)
+{
+    const double frequency_s = pair_frequency_time(s);
+    return drift_only(s) && (frequency_s > 0.0 || pair_phase_time(s) > 0.0)
+               ? CFG(DRIFT_ONLY_FREQUENCY_TIME_CONSTANT_S)
+               : frequency_s;
+}
+
+double sc_hybrid_phase_time(const sc_hybrid_t *s)
+{
+    return drift_only(s) ? 0.0 : pair_phase_time(s);
 }
 
 static void preload_phase_pi(sc_hybrid_t *s)
@@ -452,7 +481,7 @@ static bool phase_span_ready(const sc_hybrid_t *s, const sc_hybrid_input_t *in)
 
 static void activate_phase(sc_hybrid_t *s, const sc_hybrid_input_t *in)
 {
-    if (s->phase_valid)
+    if (s->phase_valid && s->anchor_time_system == s->time_system)
     {
         /* Every restart of phase control takes a fresh local reference rather
          * than steering the holdover phase error back (that pull reached about
@@ -464,6 +493,7 @@ static void activate_phase(sc_hybrid_t *s, const sc_hybrid_input_t *in)
     }
     s->phase_reference_ns = in->bias_ns;
     s->phase_reference_epoch_ms = in->epoch_ms;
+    s->anchor_time_system = s->time_system;
     s->generation++;
     s->phase_valid = true;
     s->phase_error_ns = s->filtered_error_ns = 0.0;
@@ -483,13 +513,18 @@ static void activate_phase(sc_hybrid_t *s, const sc_hybrid_input_t *in)
     state(s, SC_HYBRID_PHASE_RECOVERING);
 }
 
+static bool phase_qualified(sc_hybrid_t *s, const sc_hybrid_input_t *in)
+{
+    return phase_span_ready(s, in) && frequency_window_good(s, SC_HYBRID_TRACKING_POINTS) &&
+           fabs(s->metrics.residual_slope_ppb) <=
+               CFG(QUALIFIED_BIAS_DRIFT_DISAGREEMENT_LIMIT_PPB) &&
+           s->metrics.residual_detrended_rms_ns <=
+               CFG(QUALIFIED_BIAS_MINUS_INTEGRATED_DRIFT_DETRENDED_RMS_LIMIT_NS);
+}
+
 static bool enter_phase(sc_hybrid_t *s, const sc_hybrid_input_t *in)
 {
-    if (s->loop_mode == SC_HYBRID_LOOP_FREQUENCY || !phase_span_ready(s, in) ||
-        !frequency_window_good(s, SC_HYBRID_TRACKING_POINTS) ||
-        fabs(s->metrics.residual_slope_ppb) > CFG(QUALIFIED_BIAS_DRIFT_DISAGREEMENT_LIMIT_PPB) ||
-        s->metrics.residual_detrended_rms_ns >
-            CFG(QUALIFIED_BIAS_MINUS_INTEGRATED_DRIFT_DETRENDED_RMS_LIMIT_NS))
+    if (s->loop_mode == SC_HYBRID_LOOP_FREQUENCY || !phase_qualified(s, in))
     {
         return false;
     }
@@ -497,14 +532,18 @@ static bool enter_phase(sc_hybrid_t *s, const sc_hybrid_input_t *in)
     return true; /* No integral or actuator update at this activation boundary. */
 }
 
-static void handover_phase(sc_hybrid_t *s, const sc_hybrid_input_t *in, double innovation_ns)
+static void handover_phase(sc_hybrid_t *s, const sc_hybrid_input_t *in, double innovation_ns,
+                           bool keep_anchor)
 {
     /* Align only the statistics origin across the receiver's reference offset;
      * retain contiguous drift history and the prior residual.
      * The control anchor is recaptured separately. This abandons the old local
-     * phase target, so it cannot establish absolute UTC phase continuity. */
+     * phase target, so it cannot establish absolute UTC phase continuity.
+     * Into, within or out of a fallback, phase is not steered and the anchor
+     * stays that of the primary solution: the eventual re-anchor then logs
+     * the step across the whole fallback in one time scale. */
     s->phase_base_ns += innovation_ns;
-    s->phase_valid = false;
+    s->phase_valid = s->phase_valid && keep_anchor;
     s->phase_good_samples = 0U;
     s->locking = s->locked = false;
     if (s->phase_enabled)
@@ -604,6 +643,14 @@ static void phase_status(sc_hybrid_t *s, const sc_hybrid_input_t *in, bool windo
 static void track(sc_hybrid_t *s, const sc_hybrid_input_t *in)
 {
     s->integral_limited = false;
+    if (s->settling && !s->fallback && (uint32_t)(in->now_ms - s->settle_ms) >= SETTLE_MS &&
+        phase_qualified(s, in))
+    {
+        /* Settled PPP: restore its loop pair; phase restarts below from a
+         * fresh, logged anchor (no pull toward the pre-fallback reference). */
+        s->settling = false;
+        select_loop(s);
+    }
     if (!s->phase_enabled && enter_phase(s, in))
     {
         return;
@@ -640,11 +687,14 @@ static void track(sc_hybrid_t *s, const sc_hybrid_input_t *in)
     {
         /* Direct PI, u = I - (2/Tphi)*e, Ki = 1/Tphi^2. Unlike BOTH, its
          * output is total oscillator trim, never a drift target fed to an FLL.
-         * With no coarse acquisition, use the existing boot +/-10 ppb envelope.
+         * Bounded to a span about the trim verified at the last acquisition
+         * (the boot-relative envelope is wide enough for lifetime ageing).
          * Drift remains available for integrity/diagnostics, not actuation. */
         double trial_i = s->phase_integral_ppb + delta_i;
         const double raw = trial_i - 2.0 / sc_hybrid_phase_time(s) * s->filtered_error_ns;
-        const double bounded = clamp(raw, s->lower_ppb, s->upper_ppb);
+        const double span = CFG(PHASE_TRACKING_SPAN_ABOUT_ACQUIRED_TRIM_PPB);
+        const double bounded = clamp(raw, fmax(s->lower_ppb, s->acquired_ppb - span),
+                                     fmin(s->upper_ppb, s->acquired_ppb + span));
         const double limited = clamp(bounded, s->applied_ppb - rate, s->applied_ppb + rate);
         if ((raw - limited) * delta_i > 0.0)
         {
@@ -758,10 +808,33 @@ static void control_sample(sc_hybrid_t *s, const sc_hybrid_input_t *in)
     const bool recover_reference =
         !handover && ((domain_change && s->source_mode != 0U) || in->coordinate_changed ||
                       in->frequency_discontinuity);
-    if (domain_change)
+    const bool was_drift_only = drift_only(s), was_fallback = s->fallback;
+    const bool primary_changed = (ppp || fallback) && in->primary_mode != s->primary_mode;
+    if (primary_changed)
     {
-        s->source_mode = mode;
-        s->time_system = in->time_system;
+        /* A new selection: an anchor taken in the old primary is not comparable. */
+        s->primary_mode = in->primary_mode;
+        s->phase_valid = s->settling = false;
+    }
+    if (ppp || fallback)
+    {
+        s->fallback = solution_rank(mode) < solution_rank(s->primary_mode);
+        if (domain_change && mode == SC_SBF_PVT_MODE_PPP && s->source_mode != 0U &&
+            s->source_mode != SC_SBF_PVT_MODE_PPP && s->primary_mode == SC_SBF_PVT_MODE_PPP)
+        {
+            /* Returning PPP starts tens of ns off and re-converges for 10-25 min. */
+            s->settling = true;
+            s->settle_ms = in->now_ms;
+        }
+    }
+    const bool keep_anchor = was_fallback || s->fallback;
+    if (domain_change || primary_changed || drift_only(s) != was_drift_only)
+    {
+        if (domain_change)
+        {
+            s->source_mode = mode;
+            s->time_system = in->time_system;
+        }
         select_loop(s);
     }
     if (recover_reference)
@@ -841,7 +914,7 @@ static void control_sample(sc_hybrid_t *s, const sc_hybrid_input_t *in)
         {
             /* Drift innovation was still checked. The FLL may make its normal
              * bounded update on this sample, including 1 Hz mode alternation. */
-            handover_phase(s, in, innovation);
+            handover_phase(s, in, innovation, keep_anchor);
         }
         else
         {

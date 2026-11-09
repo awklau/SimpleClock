@@ -597,6 +597,8 @@ static int scenario_normal(void)
 static int scenario_standalone(bool fixed)
 {
     reset_fixture(1.25);
+    /* Standalone is the selected (primary) mode here, so it steers phase. */
+    gnss_selected = SC_SETTINGS_GNSS_STANDALONE;
     double bias = 0.0;
     const double physical = -sit5801_fcw_to_ppb(sit5801_fcw_decode(oscillator_words));
     for (unsigned i = 0U; i < 400U; i++)
@@ -1063,6 +1065,17 @@ static int scenario_steering_commands(void)
     }
     CHECK(hybrid_probe_state()->generation == generation &&
           hybrid_probe_state()->reanchor_count == reanchors && hybrid_probe_locked());
+    /* A receiver-profile save with nothing to write succeeds with an FCW in
+     * flight (`gnss auto` on an already matching receiver while steering);
+     * a real change is still refused until the actuator has settled. */
+    for (unsigned i = 0U; i < 200U && !hybrid_probe_state()->pending; ++i)
+    {
+        cycle(physical + (i % 2U ? 0.002 : -0.002), &bias, true);
+    }
+    CHECK(hybrid_probe_state()->pending);
+    CHECK(hybrid_probe_receiver_persist(saved.receiver_user_profile != 0U));
+    CHECK(!hybrid_probe_receiver_persist(saved.receiver_user_profile == 0U));
+    CHECK(sc_hybrid_tracking(hybrid_probe_state()) && hybrid_probe_state()->phase_enabled);
     /* Without a readback inside 1.5 s it still expires and is rejected. */
     for (unsigned i = 0U; i < 200U && !hybrid_probe_state()->pending; ++i)
     {
@@ -1083,6 +1096,8 @@ static int scenario_steering_commands(void)
 static int scenario_runtime_loops(void)
 {
     reset_fixture(1.25);
+    /* Standalone is the selected (primary) mode here, so it steers phase. */
+    gnss_selected = SC_SETTINGS_GNSS_STANDALONE;
     CHECK(run_command("hybrid params ppp 0 600", true) == 0);
     CHECK(hybrid_probe_state()->loop_mode == SC_HYBRID_LOOP_PHASE && hybrid_probe_state()->enabled);
     CHECK(run_command("hybrid params ppp 0 6000", true) == 0);
@@ -1202,7 +1217,7 @@ static int scenario_runtime_loops(void)
     sc_settings_t saved;
     uint32_t generation;
     CHECK(settings_flash_load(&saved, &generation) == SC_SETTINGS_VALID);
-    CHECK(saved.gnss_selection == SC_SETTINGS_GNSS_SBAS && saved.ppp_frequency_s == 0U &&
+    CHECK(saved.gnss_selection == SC_SETTINGS_GNSS_STANDALONE && saved.ppp_frequency_s == 0U &&
           saved.ppp_phase_s == 10U && saved.sbas_frequency_s == 86400U &&
           saved.sbas_phase_s == 0U && saved.standalone_frequency_s == 0U &&
           saved.standalone_phase_s == 0U);

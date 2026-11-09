@@ -403,8 +403,172 @@ static int test_ramp_and_lock(void)
     return 0;
 }
 
+static int test_drift_only_fallback(void)
+{
+    /* Selection allows PPP: SBAS and standalone are fallbacks. */
+    initialize(SC_HYBRID_LOOP_PHASE);
+    in.primary_mode = 10U;
+    for (unsigned i = 0U; i < 400U; i++)
+    {
+        tick();
+    }
+    CHECK(s.locked && s.phase_enabled && s.phase_valid && s.loop_mode == SC_HYBRID_LOOP_PHASE);
+    const double reference = s.phase_reference_ns;
+    const unsigned reanchors = s.reanchor_count;
+    /* PPP -> SBAS with a 10 ns bias jump: frequency loop only, PPP anchor kept. */
+    source(6U);
+    offset = 10.0;
+    tick();
+    CHECK(s.fallback && !s.settling && sc_hybrid_tracking(&s));
+    CHECK(s.loop_mode == SC_HYBRID_LOOP_FREQUENCY && !s.phase_enabled);
+    CHECK(sc_hybrid_frequency_time(&s) == 10.0 && sc_hybrid_phase_time(&s) == 0.0);
+    CHECK(s.phase_valid && s.phase_reference_ns == reference);
+    /* SBAS -> standalone with another 100 ns jump: still frequency only, no pull. */
+    const double before = s.applied_ppb;
+    source(1U);
+    offset = 110.0;
+    for (unsigned i = 0U; i < 30U; i++)
+    {
+        tick();
+        CHECK(s.fallback && !s.phase_enabled && fabs(s.applied_ppb - before) < 0.0001);
+    }
+    /* A drift error is still corrected, at the drift-only Tf of 10 s (under the slew cap). */
+    const double accumulator = s.accumulator_ppb;
+    physical += 0.02;
+    tick();
+    CHECK(fabs(s.accumulator_ppb - (accumulator - (in.drift_ppb - 0.0) / 10.0)) < 1e-9);
+    /* Back to PPP, starting 40 ns off and converging: frequency only through
+     * the 1000 s settle; then phase restarts from a fresh, logged anchor. */
+    source(10U);
+    unsigned t = 0U;
+    offset = 2.0 + 38.0;
+    tick();
+    CHECK(!s.fallback && s.settling && s.loop_mode == SC_HYBRID_LOOP_FREQUENCY);
+    for (t = 1U; t < 999U; t++)
+    {
+        offset = 2.0 + 38.0 * exp(-(double)t / 150.0);
+        tick();
+        CHECK(s.settling && !s.phase_enabled && sc_hybrid_tracking(&s));
+    }
+    for (; t < 1200U && !s.phase_enabled; t++)
+    {
+        offset = 2.0 + 38.0 * exp(-(double)t / 150.0);
+        tick();
+    }
+    CHECK(s.phase_enabled && !s.settling && s.loop_mode == SC_HYBRID_LOOP_PHASE);
+    CHECK(s.reanchor_count == reanchors + 1U && s.filtered_error_ns == 0.0);
+    CHECK(fabs(s.reanchor_step_ns - (s.phase_reference_ns - reference)) < 1e-9);
+    /* No pull toward the old reference afterwards. */
+    const double anchored = s.applied_ppb;
+    for (unsigned i = 0U; i < 60U; i++)
+    {
+        tick();
+    }
+    CHECK(fabs(s.applied_ppb - anchored) < 0.001 && fabs(s.filtered_error_ns) < 1.0);
+
+    /* SBAS selection: standalone is the fallback; returning SBAS needs no
+     * settle, only the normal phase qualification. */
+    initialize(SC_HYBRID_LOOP_PHASE);
+    in.primary_mode = 6U;
+    source(6U);
+    for (unsigned i = 0U; i < 400U; i++)
+    {
+        tick();
+    }
+    CHECK(s.locked && s.phase_enabled && !s.fallback);
+    const unsigned sbas_reanchors = s.reanchor_count;
+    const double sbas_reference = s.phase_reference_ns;
+    source(1U);
+    offset = 8.0;
+    tick();
+    CHECK(s.fallback && !s.phase_enabled && s.loop_mode == SC_HYBRID_LOOP_FREQUENCY);
+    source(6U);
+    offset = 3.0;
+    tick();
+    CHECK(!s.fallback && !s.settling && s.loop_mode == SC_HYBRID_LOOP_PHASE && !s.phase_enabled);
+    unsigned waited = 0U;
+    while (!s.phase_enabled && waited < 200U)
+    {
+        tick();
+        waited++;
+    }
+    CHECK(s.phase_enabled && waited >= 100U && s.reanchor_count == sbas_reanchors + 1U);
+    CHECK(fabs(s.reanchor_step_ns - (s.phase_reference_ns - sbas_reference)) < 1e-9);
+    /* A new selection: an anchor from the old primary is not comparable. */
+    in.primary_mode = 10U;
+    tick();
+    CHECK(s.fallback && !s.phase_valid && !s.phase_enabled);
+
+    /* A 0/0 pair never steers on its solution type, in a fallback too: the
+     * trim is held on SBAS, and steering returns on the next enabled type. */
+    initialize(SC_HYBRID_LOOP_PHASE);
+    in.primary_mode = 10U;
+    for (unsigned i = 0U; i < 400U; i++)
+    {
+        tick();
+    }
+    CHECK(s.locked && sc_hybrid_profile_parameters(&s, SC_HYBRID_PROFILE_SBAS, 0.0, 0.0));
+    source(6U);
+    offset = 10.0;
+    tick();
+    CHECK(s.fallback && s.loop_mode == SC_HYBRID_LOOP_OFF && s.state == SC_HYBRID_DISABLED);
+    const int64_t held = word;
+    physical += 0.02;
+    for (unsigned i = 0U; i < 30U; i++)
+    {
+        tick();
+        CHECK(word == held && s.state == SC_HYBRID_DISABLED);
+    }
+    source(1U);
+    offset = 20.0;
+    tick();
+    CHECK(s.fallback && s.loop_mode == SC_HYBRID_LOOP_FREQUENCY && sc_hybrid_tracking(&s));
+    for (unsigned i = 0U; i < 30U; i++)
+    {
+        tick();
+    }
+    CHECK(word != held && !s.phase_enabled);
+    /* The same for the selected type while PPP settles. */
+    CHECK(sc_hybrid_profile_parameters(&s, SC_HYBRID_PROFILE_PPP, 0.0, 0.0));
+    source(10U);
+    offset = 0.0;
+    tick();
+    CHECK(s.settling && s.loop_mode == SC_HYBRID_LOOP_OFF && s.state == SC_HYBRID_DISABLED);
+    return 0;
+}
+
+static int test_phase_span_recentres(void)
+{
+    /* Phase-only tracking is bounded to +/-10 ppb about the trim verified at
+     * the last acquisition, not by the wide boot-relative envelope. A slow
+     * frequency ramp past that span freezes once, then re-acquires and
+     * re-centres the span instead of latching a fault or stopping. */
+    start(SC_HYBRID_LOOP_PHASE);
+    CHECK(s.locked && s.upper_ppb - s.lower_ppb > 1000.0);
+    const double first = s.acquired_ppb;
+    unsigned limit_freezes = 0U;
+    for (unsigned i = 0U; i < 9000U; i++)
+    {
+        physical += 0.002; /* 18 ppb in total, below the 0.003 ppb/s slew cap. */
+        tick();
+        CHECK(fabs(s.applied_ppb - s.acquired_ppb) <= 10.0 + 1e-6 || !sc_hybrid_tracking(&s));
+        limit_freezes += (s.reason & SC_HYBRID_Q_LIMIT) && s.state == SC_HYBRID_HOLDOVER ? 1U : 0U;
+        CHECK(s.state != SC_HYBRID_ACQUISITION_FAULT);
+    }
+    for (unsigned i = 0U; i < 4000U; i++) /* Tphi is 600 s in this fixture. */
+    {
+        tick();
+    }
+    CHECK(limit_freezes >= 1U && limit_freezes <= 3U);
+    CHECK(sc_hybrid_tracking(&s) && s.phase_enabled && fabs(s.acquired_ppb - first) > 9.0);
+    CHECK(fabs(physical + s.applied_ppb) < 0.05);
+    return 0;
+}
+
 int main(void)
 {
+    CHECK(test_phase_span_recentres() == 0);
+    CHECK(test_drift_only_fallback() == 0);
     CHECK(test_continuous_handover() == 0);
     CHECK(test_flapping() == 0);
     CHECK(test_modes_and_weights() == 0);

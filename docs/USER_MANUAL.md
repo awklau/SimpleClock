@@ -43,13 +43,26 @@ temperature control.
 
 The receiver may use **PPP/HAS** (Galileo High Accuracy Service corrections),
 **SBAS**, **standalone** (rover) or, if configured, **static** (fixed
-position). When it switches between them, steering continues without a pause
-using the new type's loop settings; the phase reference is re-taken at the
-switch.
+position). The selection (section 5) sets the best type allowed: PPP for
+`gnss auto` and `gnss has`, SBAS for `gnss sbas`, standalone for
+`gnss standalone`. Steering continues without a pause when the type changes:
+
+- Below the selected type (a **fallback**, such as PPP to SBAS during
+  interference), only the frequency loop runs. The receiver's bias jumps by
+  several ns between types, but its drift does not.
+- Back on SBAS, phase steering restarts after its normal 120 s check.
+- Back on PPP, the frequency loop alone continues for at least 1000 s while
+  PPP re-converges. Phase steering then restarts from a fresh reference.
+
+The output phase therefore never follows a fallback's bias. It may wander
+slightly during the fallback, and that wander is left in place, not pulled
+back. `clock_guard` shows `fallback=1` or `settling=1`.
 
 A site that repeatedly sees only a few satellites (about 6) gives a poor PPP
 solution. The firmware does not detect this by itself; select SBAS or
-standalone for such a site (section 5).
+standalone for such a site (section 5). The same applies to a site that keeps
+falling back, or one without HAS coverage on `gnss auto`. There, the clock would
+stay frequency-only.
 
 ## 2. The LEDs
 
@@ -115,6 +128,17 @@ When both are on, Tphi of at least 2.5 × Tf is recommended.
 | Standalone (rover) | 10 / 100 s |
 | Static (fixed position) | 10 / 100 s |
 
+A pair applies while its type is the selected one. In a fallback, or while
+PPP settles after a return, the frequency loop runs alone with a fixed Tf of
+10 s (section 1).
+
+**`0 0` means "never steer on this solution type"**, in a fallback too. The
+receiver, not the firmware, picks the solution type, and it uses the best one
+allowed. With SBAS set to `0 0` under `gnss auto`, the clock therefore holds
+its trim for as long as the receiver stays on SBAS; it does not move on to
+standalone. To keep the receiver off SBAS altogether, use `gnss has`
+(section 5).
+
 Change them live, then save so they survive a restart:
 
 ```text
@@ -168,8 +192,31 @@ Start with `hybrid config` and a short recording, then look at these fields:
 | LED2 on but the clock is not steering | `clock_auto`: `state`, `reason` (bit meanings in [COMMANDS](../firmware/docs/COMMANDS.md#reason-bits)), `enabled`, `gnss_good`. `enabled=0` means a hold: send `hybrid resume`. |
 | LED1 keeps blinking | Normal for several minutes after start or a GNSS outage. `hybrid_quality` shows the frequency statistics. |
 | LED3 double flash | `thermal_warning` and `thermal` records name the fault. After fixing the cause, `fault clear` clears a heater fault; `outer resume` clears an outer-loop safety fault. |
-| Frequent `phase_reanchor` records | Repeated GNSS outages longer than 10 s, or solution-type switches. Check the antenna and the `clock_guard` counters. |
+| Frequent `phase_reanchor` records | Repeated GNSS outages longer than 10 s, or repeated fallbacks and returns (`clock_guard` `fallback`, `settling`). Check the antenna; for a site that keeps falling back, select SBAS or standalone. |
 | Receiver error `2048` in status | The receiver's geographic/motion restriction (OUTOFFENCE); it clears itself once the receiver has a position. |
 
 A board that does not respond over USB can still be reprogrammed: fit J17,
 power-cycle, and follow [first flashing](FIRST_FLASHING.md) step 3.
+
+## 7. Known limitations
+
+- **Saving while steering.** A receiver change ends by saving the selection in
+  MCU flash, which needs a moment with no oscillator write in progress. The
+  firmware pauses the clock for this, but two cases can still fail and report
+  `gnss_probe auto_fault=1` with the clock in HOLDOVER:
+  - `gnss auto` sent while steering, after loop settings were changed with
+    `hybrid params` or `hybrid clip` and not saved;
+  - `hybrid resume` sent before a receiver change has completed.
+
+  Sending the command again clears it. To avoid it, send `hybrid hold` first
+  (or `hybrid save` after tuning), wait for the change to complete, then
+  `hybrid resume`.
+- **A refused change leaves the clock held.** If a receiver change is refused
+  (`busy`, or no hold within 3 s), the receiver is untouched but the clock
+  stays in MANUAL_HOLD until `hybrid resume`.
+- **PPP settle needs a visible fallback.** The 1000 s settle starts when the
+  receiver returns to PPP from SBAS or standalone. If the receiver reports PPP
+  again directly after an outage, only the normal 120 s phase check applies.
+- **Not hardware-tested in this release:** the ±1000 ppb boot envelope, the
+  ±10 ppb phase-only tracking span, `0 0` pairs in a fallback, and repeated
+  `gnss auto` while steering are covered by host tests only.

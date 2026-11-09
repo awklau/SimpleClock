@@ -135,6 +135,9 @@ typedef struct
     /* static_fix marks a standalone_valid Static-PVT fixed-position solution. */
     bool static_fix;
     uint8_t time_system;
+    /* Best solution the GNSS selection allows (SC_SBF_PVT_MODE_*; 0 = none).
+     * A lower solution is a fallback: frequency loop only. */
+    uint8_t primary_mode;
 } sc_hybrid_input_t;
 
 /* Foreground-only controller and exclusive automatic FCW owner. No heap, I/O,
@@ -193,6 +196,14 @@ typedef struct
     /* Short receiver gaps bridged while tracking (no requalification or
      * re-anchor) and the receiver epochs they skipped. */
     uint32_t bridged_gaps, bridged_epochs;
+    /* Frequency loop only while the source is below primary_mode (fallback)
+     * and, after a return to PPP, until settle_ms + the settle time has passed
+     * and phase qualifies (settling). The primary-mode anchor is kept, so the
+     * later re-anchor logs the step across the fallback. */
+    uint32_t settle_ms;
+    uint8_t primary_mode;
+    uint8_t anchor_time_system; /* Time system of phase_reference_ns. */
+    bool fallback, settling;
     /* phase_valid records an anchor's existence, not steering or lock permission. */
     bool enabled, known, boot_known, pending, request_ready, phase_valid;
     bool previous_valid, qualifying, locking, locked, gnss_good;

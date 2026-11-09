@@ -171,6 +171,27 @@ static bool bench_profile(unsigned profile)
            profile == GNSS_PROFILE_STANDALONE;
 }
 #ifdef SIMPLECLOCK_AUTO_HYBRID
+/* Index of the first command that changes the receiver in a selection or mask
+ * change; earlier commands are read-only preflight. */
+static unsigned setter_index(unsigned profile)
+{
+    return profile == GNSS_PROFILE_STANDALONE ? 1U
+           : bench_profile(profile)           ? BENCH_SET_PVT_INDEX
+           : elevation_mutation(profile)      ? 2U
+                                              : UINT32_MAX;
+}
+
+/* MASK_FAULT records that the last mask change did not complete. Only a mask
+ * that is also unread blocks anything: read-back values are a known state,
+ * even when they are not the values requested. */
+static bool mask_unknown(void)
+{
+    return (elevation_flags & MASK_FAULT) &&
+           (elevation_flags & (MASK_PVT_KNOWN | MASK_TRACKING_KNOWN)) !=
+               (MASK_PVT_KNOWN | MASK_TRACKING_KNOWN);
+}
+#endif
+#ifdef SIMPLECLOCK_AUTO_HYBRID
 /* Autonomous boot is query-first. Conditional setters are skipped when their
  * readback already satisfies the contract. */
 #define AUTO_COMMANDS_BEGIN                                                                        \
@@ -272,6 +293,11 @@ static bool auto_seen_usage, auto_seen_pvt;
 static uint8_t auto_retry_count;
 static uint32_t auto_retry_due_ms;
 static bool auto_retry_scheduled, auto_manual_override;
+/* auto_adopt: the next AUTO run takes the receiver's PVT mode as the selection
+ * and saves it (after a selection change that may have reached the receiver).
+ * setter_wait: a change is waiting for the clock hold to settle. */
+static bool auto_adopt, setter_wait;
+static uint32_t control_wait_ms; /* Start of a gnss write waiting for the hold. */
 static char auto_pps_response[96];
 /* G5 v1.1.0 pp.143-144: RxClock pulses follow receiver measurement epochs and
  * continue indefinitely. Only interval/time scale/holdover belong to this
@@ -653,6 +679,21 @@ static bool command_active;
 static volatile uint32_t requested_profile = GNSS_PROFILE_IDENTIFY;
 static unsigned reply_acks, reply_rejects;
 
+#ifdef SIMPLECLOCK_AUTO_HYBRID
+/* A selection change that may have reached the receiver did not complete.
+ * Re-read the receiver, adopt the PVT mode it actually runs and save that to
+ * Boot and MCU flash: a known, consistent selection rather than a latched
+ * fault. Read-only; auto_fault stays set until that run verifies it. */
+static void selection_recover(void)
+{
+    auto_adopt = true;
+    auto_ready = false;
+    auto_fault = true;
+    auto_pvt_verified = false;
+    requested_profile = AUTO_RESTORE_PROFILE;
+}
+#endif
+
 typedef struct
 {
     uint8_t prefix[SC_SBF_PREFIX];
@@ -836,7 +877,12 @@ static void auto_observe_reply_line(void)
         uint32_t selection;
         bool fixed;
         auto_ppp = sc_gnss_control_pvt_policy(line, &selection, &fixed) &&
-                   selection == receiver_selection && (receiver_user_profile || !fixed);
+                   (selection == receiver_selection || auto_adopt) &&
+                   (receiver_user_profile || !fixed);
+        if (auto_ppp)
+        {
+            receiver_selection = (uint8_t)selection;
+        }
         auto_static_pvt = auto_ppp && fixed;
     }
     else if (strncmp(line, "ReceiverDynamics,", 17) == 0)
@@ -1063,12 +1109,8 @@ void gnss_probe_request(uint32_t profile)
          ))
     {
 #ifdef SIMPLECLOCK_AUTO_HYBRID
-        if (bench_profile(profile))
-        {
-            /* Sticky until this selection's final readback succeeds. A later
-             * status query must not revive readiness after a failed setter. */
-            auto_pvt_verified = false;
-        }
+        /* A selection change clears PVT verification at its setter, not here:
+         * a change refused during preflight leaves the receiver untouched. */
         if (profile != GNSS_PROFILE_AUTO_HYBRID && (command_profile == GNSS_PROFILE_AUTO_HYBRID ||
                                                     requested_profile == GNSS_PROFILE_AUTO_HYBRID ||
                                                     requested_profile == AUTO_RESTORE_PROFILE))
@@ -1453,15 +1495,36 @@ static bool control_report(uint32_t now_ms, const char *stage, const char *statu
 
 static void control_begin(uint32_t now_ms)
 {
+    control_command[0] = control_query[0] = '\0';
+    control_kind =
+        sc_gnss_control_prepare(control_mailbox, control_command, sizeof(control_command),
+                                control_query, sizeof(control_query));
+    const bool holds = control_kind == SC_GNSS_CONTROL_WRITE ||
+                       !strncmp(control_command, "exeResetNavFilter", 17) ||
+                       !strncmp(control_command, "exeCopyConfigFile", 17);
+    if (holds && !hybrid_probe_receiver_change_ready())
+    {
+        /* As for selection changes: a steering clock nearly always has an FCW
+         * write awaiting readback. Hold first and keep the request pending
+         * (<= 3 s) until it settles; refuse as busy only if it never does. */
+        if (!setter_wait)
+        {
+            setter_wait = true;
+            control_wait_ms = now_ms;
+            hybrid_probe_manual_request();
+        }
+        if ((uint32_t)(now_ms - control_wait_ms) < 3000U)
+        {
+            control_kind = SC_GNSS_CONTROL_INVALID;
+            return; /* control_pending stays set; retried next service. */
+        }
+    }
+    setter_wait = false;
     control_seq++;
     control_started_ms = now_ms;
     control_changed = control_overflow = false;
     control_drop_start = reply_drops;
     control_rx_start = rx_overflow + rx_errors;
-    control_command[0] = control_query[0] = '\0';
-    control_kind =
-        sc_gnss_control_prepare(control_mailbox, control_command, sizeof(control_command),
-                                control_query, sizeof(control_query));
     (void)sc_gnss_control_lists_init(&control_lists,
                                      control_kind == SC_GNSS_CONTROL_WRITE ? control_command : "");
     if (control_lists.bad)
@@ -1470,7 +1533,7 @@ static void control_begin(uint32_t now_ms)
     }
     const bool ready = control_kind == SC_GNSS_CONTROL_READ ||
                        (hybrid_probe_receiver_change_ready() &&
-                        (control_kind != SC_GNSS_CONTROL_WRITE || !(elevation_flags & MASK_FAULT)));
+                        (control_kind != SC_GNSS_CONTROL_WRITE || !mask_unknown()));
     if (!control_kind || !ready)
     {
         control_result = ready ? "invalid" : "busy";
@@ -1663,7 +1726,7 @@ static void startup_ack_service(uint32_t now_ms)
         }
     }
     if (startup_ack != STARTUP_ACK_ARMED || !auto_ready || !auto_pvt_verified || auto_fault ||
-        (elevation_flags & MASK_FAULT) || !fresh)
+        mask_unknown() || !fresh)
     {
         return;
     }
@@ -1908,7 +1971,7 @@ void gnss_probe_service(uint32_t now_ms)
                     if (command_index == command_count
 #ifdef SIMPLECLOCK_AUTO_HYBRID
                         || (command_profile == GNSS_PROFILE_AUTO_HYBRID && receiver_user_profile &&
-                            command_index == AUTO_SAVE_BOOT)
+                            !auto_adopt && command_index == AUTO_SAVE_BOOT)
 #endif
                     )
                     {
@@ -1954,20 +2017,19 @@ void gnss_probe_service(uint32_t now_ms)
 #ifdef SIMPLECLOCK_AUTO_HYBRID
                         else if (bench_profile(command_profile))
                         {
-                            auto_pvt_verified = transaction.readback.matched;
                             auto_static_pvt = false; /* Legacy shortcuts explicitly set Rover. */
                             receiver_selection =
                                 command_profile == GNSS_PROFILE_NO_HAS ? SC_SETTINGS_GNSS_SBAS
                                 : command_profile == GNSS_PROFILE_HAS  ? SC_SETTINGS_GNSS_HAS
                                                                       : SC_SETTINGS_GNSS_STANDALONE;
-                            if (hybrid_probe_receiver_persist(true))
+                            if (transaction.readback.matched && hybrid_probe_receiver_persist(true))
                             {
+                                auto_pvt_verified = true;
                                 receiver_user_profile = true;
                             }
                             else
                             {
-                                auto_pvt_verified = false;
-                                auto_fault = true;
+                                selection_recover();
                             }
                         }
                         else if (command_profile == GNSS_PROFILE_AUTO_HYBRID)
@@ -1977,7 +2039,7 @@ void gnss_probe_service(uint32_t now_ms)
                                 auto_timing_auto && auto_data_sbf && auto_stream &&
                                 auto_capability && auto_tracking && auto_usage && auto_ppp &&
                                 (receiver_user_profile ? auto_seen_dynamics : auto_dynamics_static);
-                            if (auto_ready && !receiver_user_profile)
+                            if (auto_ready && (!receiver_user_profile || auto_adopt))
                             {
                                 if (defaults_pending)
                                 {
@@ -1986,12 +2048,18 @@ void gnss_probe_service(uint32_t now_ms)
                                 if (hybrid_probe_receiver_persist(true))
                                 {
                                     receiver_user_profile = true;
+                                    auto_adopt = false; /* Else the resume recheck saves again. */
                                 }
                                 else
                                 {
                                     auto_ready = false;
                                     auto_manual_override = true;
                                 }
+                            }
+                            if (auto_ready && mask_unknown())
+                            {
+                                /* Re-read masks left unknown by a failed change. */
+                                requested_profile = GNSS_PROFILE_ELEVATION_SURVEY;
                             }
                             if (defaults_pending && auto_ready)
                             {
@@ -2031,6 +2099,9 @@ void gnss_probe_service(uint32_t now_ms)
                 {
                     reply_rejects++;
                 }
+#ifdef SIMPLECLOCK_AUTO_HYBRID
+                const unsigned failed_index = command_index;
+#endif
                 command_index = command_count; /* stop the entire profile on error */
 #ifdef SIMPLECLOCK_AUTO_HYBRID
                 if (command_profile == GNSS_PROFILE_AUTO_HYBRID)
@@ -2040,6 +2111,17 @@ void gnss_probe_service(uint32_t now_ms)
                 else if (command_profile == GNSS_PROFILE_DEFAULTS)
                 {
                     auto_fail(now_ms);
+                }
+                else if (bench_profile(command_profile) &&
+                         (failed_index >= setter_index(command_profile) || auto_adopt))
+                {
+                    /* Lost or rejected reply after the setter: the receiver
+                     * state is unknown until it is read back. */
+                    selection_recover();
+                }
+                else if (elevation_mutation(command_profile))
+                {
+                    requested_profile = GNSS_PROFILE_ELEVATION_SURVEY;
                 }
 #endif
             }
@@ -2085,7 +2167,7 @@ void gnss_probe_service(uint32_t now_ms)
         }
 #endif
 #ifdef SIMPLECLOCK_AUTO_HYBRID
-        if (!control_kind && auto_retry_scheduled && !auto_manual_override &&
+        if (!control_kind && !control_pending && auto_retry_scheduled && !auto_manual_override &&
             (uint32_t)(now_ms - auto_retry_due_ms) < 0x80000000U)
         {
             auto_retry_scheduled = false;
@@ -2114,6 +2196,7 @@ void gnss_probe_service(uint32_t now_ms)
             {
                 receiver_selection = SC_SETTINGS_GNSS_AUTO;
                 receiver_user_profile = false; /* Explicit standard profile request. */
+                auto_adopt = false;
             }
 #endif
             __set_PRIMASK(mask);
@@ -2295,14 +2378,40 @@ void gnss_probe_service(uint32_t now_ms)
                 pps_policy_rows = 0U;
                 pps_policy_matches = false;
             }
-            if (bench_profile(command_profile) && (elevation_flags & MASK_FAULT))
+            if (bench_profile(command_profile) && mask_unknown())
             {
                 transaction.state = SC_CMD_REJECTED;
                 command_index = command_count;
                 goto control_service_done;
             }
+            if (command_index == setter_index(command_profile) &&
+                !hybrid_probe_receiver_change_ready())
+            {
+                /* A steering clock nearly always has an FCW write waiting for
+                 * its paced readback (<= 1 s), and the closing MCU save is
+                 * refused until it is read back. Hold first and send the
+                 * setter only once settled. Nothing has changed yet: on
+                 * timeout, refuse with the receiver untouched. */
+                if (!setter_wait)
+                {
+                    setter_wait = true;
+                    hybrid_probe_manual_request();
+                }
+                if ((uint32_t)(now_ms - command_completed_ms) < 3000U)
+                {
+                    goto control_service_done;
+                }
+                transaction.state = SC_CMD_REJECTED;
+                command_index = command_count;
+                reply_rejects++;
+            }
+            setter_wait = false;
+            if (command_index >= command_count)
+            {
+                goto control_service_done;
+            }
             if (command_profile == GNSS_PROFILE_AUTO_HYBRID && command_index == AUTO_SAVE_BOOT &&
-                (elevation_flags & MASK_FAULT))
+                mask_unknown())
             {
                 /* Configuration checks may complete, but never persist an
                  * interrupted mask change as an unrelated setup side effect. */
@@ -2390,11 +2499,13 @@ void gnss_probe_service(uint32_t now_ms)
                     (command_profile == GNSS_PROFILE_STANDALONE ? 1U : BENCH_SET_PVT_INDEX))
             {
                 /* Supersede legacy restore ownership only at the actual setter.
-                 * A lost reply must neither resume clocks nor retry mutation. */
+                 * A lost reply must neither resume clocks nor retry mutation;
+                 * selection_recover() only reads back and adopts. */
                 ppp_restore_pending = ppp_configured = false;
                 mutation_hold = true;
                 timing_probe_break(SC_SEG_CONFIG);
 #ifdef SIMPLECLOCK_AUTO_HYBRID
+                auto_pvt_verified = false; /* Until this selection's readback. */
                 hybrid_probe_manual_request();
 #endif
             }
@@ -2656,7 +2767,7 @@ static void pps_report_service(uint32_t now_ms)
 bool gnss_probe_auto_ready(void)
 {
 #ifdef SIMPLECLOCK_AUTO_HYBRID
-    return auto_ready && auto_pvt_verified && !(elevation_flags & MASK_FAULT) &&
+    return auto_ready && auto_pvt_verified && !mask_unknown() &&
            startup_ack != STARTUP_ACK_INFLIGHT && startup_ack != STARTUP_ACK_WAIT_STATUS;
 #else
     return false;
@@ -2666,7 +2777,7 @@ bool gnss_probe_auto_ready(void)
 bool gnss_probe_auto_fault(void)
 {
 #ifdef SIMPLECLOCK_AUTO_HYBRID
-    return auto_fault || (elevation_flags & MASK_FAULT) != 0U;
+    return auto_fault || mask_unknown();
 #else
     return false;
 #endif

@@ -144,10 +144,6 @@ bool hybrid_probe_receiver_change_ready(void)
 
 bool hybrid_probe_receiver_persist(bool managed)
 {
-    if (controller.pending || manual_owned || sc_fcw_trial_active(&manual))
-    {
-        return false;
-    }
     sc_settings_t active = current_settings();
     active.receiver_user_profile = managed ? 1U : 0U;
     sc_settings_t saved;
@@ -155,7 +151,13 @@ bool hybrid_probe_receiver_persist(bool managed)
     if (settings_flash_load(&saved, &generation) == SC_SETTINGS_VALID &&
         sc_settings_equal(&active, &saved))
     {
+        /* Nothing to write: succeeds even with an FCW in flight, which a
+         * steering clock has for most of each second. */
         return true;
+    }
+    if (controller.pending || manual_owned || sc_fcw_trial_active(&manual))
+    {
+        return false;
     }
     const bool resume = controller.enabled;
     sc_hybrid_hold(&controller);
@@ -549,8 +551,9 @@ static bool report(uint32_t now_ms, uint32_t part)
     if (part == 5U)
     {
         /* Clip limit is in hybrid_config; the latched trigger is in
-         * clock_failure. v2 adds bridged short receiver gaps. */
-        sc_text_string(&t, "type=clock_guard v=2");
+         * clock_failure. v2 adds bridged short receiver gaps; v3 the
+         * drift-only fallback and post-PPP-return settling flags. */
+        sc_text_string(&t, "type=clock_guard v=3");
         append_u32(&t, " uptime_ms=", now_ms);
         append_u32(&t, " clipped=", controller.input_clipped);
         append_u32(&t, " clipped_samples=", controller.clipped_samples);
@@ -562,6 +565,8 @@ static bool report(uint32_t now_ms, uint32_t part)
         append_scaled(&t, " reanchor_total_ps=", controller.reanchor_total_ns, 1000.0);
         append_u32(&t, " bridged_gaps=", controller.bridged_gaps);
         append_u32(&t, " bridged_epochs=", controller.bridged_epochs);
+        append_u32(&t, " fallback=", controller.fallback);
+        append_u32(&t, " settling=", controller.settling);
         append_u32(&t,
                    " gnss_usable=", usable_seen && (uint32_t)(now_ms - last_usable_ms) <= 2500U);
         append_u32(&t, " event_drops=", event_drops);
@@ -1225,6 +1230,10 @@ static void consume_epoch(uint32_t now_ms)
         sc_hybrid_input_t input = {0};
         (void)sc_hybrid_input_epoch(&input, epoch, now_ms, gnss_probe_auto_ready(),
                                     rf_good(epoch, now_ms), gnss_probe_static_pvt());
+        const uint32_t selection = gnss_probe_selection();
+        input.primary_mode = selection == SC_SETTINGS_GNSS_SBAS         ? SC_SBF_PVT_MODE_SBAS
+                             : selection == SC_SETTINGS_GNSS_STANDALONE ? SC_SBF_PVT_MODE_STANDALONE
+                                                                        : SC_SBF_PVT_MODE_PPP;
         /* PPS quality follows fresh receiver validity even while an FCW write
          * is pending or the clock is held; cached epochs never renew it. */
         if (fresh && (input.gnss_valid || input.standalone_valid || input.sbas_valid))

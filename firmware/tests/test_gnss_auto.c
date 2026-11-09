@@ -115,7 +115,7 @@ bool hybrid_probe_receiver_change_ready(void)
 
 bool hybrid_probe_receiver_persist(bool managed)
 {
-    if (fail_mcu_save)
+    if (fail_mcu_save || receiver_actuator_busy) /* As firmware: refused while an FCW is pending. */
     {
         return false;
     }
@@ -787,6 +787,23 @@ static unsigned status_counter(const char *name)
         abort();
     }
     return (unsigned)strtoul(field + strlen(name), NULL, 10);
+}
+
+static unsigned mask_fault_flag(void)
+{
+    const bool usb = usb_available;
+    usb_available = true;
+    const unsigned value = status_counter(" mask_fault=");
+    usb_available = usb;
+    return value;
+}
+
+static uint32_t saved_selection(void)
+{
+    sc_settings_t saved;
+    uint32_t generation;
+    return settings_flash_load(&saved, &generation) == SC_SETTINGS_VALID ? saved.gnss_selection
+                                                                         : UINT32_MAX;
 }
 
 static int pps_policy_test(const char *name)
@@ -1480,6 +1497,27 @@ int main(int argc, char **argv)
             CHECK(setter_count == writes && boot_saves == 3U);
             return 0;
         }
+        if (!strcmp(argv[1], "control-busy"))
+        {
+            /* A steering clock nearly always has an FCW write awaiting readback:
+             * the write holds first and waits; it is refused only if that never
+             * settles, with nothing sent to the receiver. */
+            receiver_actuator_busy = true;
+            const unsigned before_busy = command_count, holds = manual_holds;
+            CHECK(gnss_probe_control("gnss write setReceiverDynamics,High"));
+            run(1500U);
+            CHECK(command_count == before_busy && manual_holds == holds + 1U);
+            receiver_actuator_busy = false;
+            run(5000U);
+            CHECK(strstr(control_event_line, "status=saved") && receiver_high_static);
+            receiver_actuator_busy = true;
+            const unsigned before_refused = command_count;
+            CHECK(gnss_probe_control("gnss write setReceiverDynamics,Moderate"));
+            run(5000U);
+            CHECK(strstr(control_event_line, "status=busy") && command_count == before_refused);
+            receiver_actuator_busy = false;
+            return 0;
+        }
         control_ignore = !strcmp(argv[1], "control-ignore");
         control_corrupt = !strcmp(argv[1], "control-corrupt");
         fail_save = !strcmp(argv[1], "control-save-fail");
@@ -1517,7 +1555,7 @@ int main(int argc, char **argv)
         lose_reply = true;
         gnss_probe_request(gnss_probe_command_profile("gnss mask pvt 15"));
         run(6500U);
-        CHECK(gnss_probe_auto_fault());
+        CHECK(!gnss_probe_auto_fault() && mask_fault_flag() == 1U); /* Re-read, reported. */
         lose_reply = false;
         CHECK(gnss_probe_defaults_request());
         run(500U);
@@ -1726,19 +1764,50 @@ int main(int argc, char **argv)
     gnss_probe_request(GNSS_PROFILE_AUTO_HYBRID);
     run(6500U);
     CHECK(gnss_probe_auto_ready() && setter_count == auto_setters);
-    /* Failed manual readback must revoke control eligibility even when the
-     * earlier automatic baseline was verified. Explicit retry can recover. */
+    /* A selection setter whose reply is lost leaves the receiver state unknown.
+     * The firmware reads it back, adopts the mode the receiver actually runs
+     * and saves it: a known selection, never a latched fault. */
     lose_reply = true;
     gnss_probe_request(GNSS_PROFILE_STANDALONE);
-    run(6500U);
-    CHECK(!gnss_probe_auto_ready() && gnss_probe_mutation_hold());
+    run(12000U);
+    CHECK(gnss_probe_auto_ready() && !gnss_probe_auto_fault() && !receiver_ppp && !receiver_sbas);
+    CHECK(gnss_probe_selection() == SC_SETTINGS_GNSS_STANDALONE &&
+          saved_selection() == SC_SETTINGS_GNSS_STANDALONE);
     lose_reply = false;
-    gnss_probe_request(GNSS_PROFILE_IDENTIFY);
+    /* A steering clock nearly always has an FCW write awaiting readback. The
+     * switch holds first and sends the setter only once that has settled. */
+    const unsigned pvt_before_busy = pvt_setter_count, holds_before_busy = manual_holds;
+    receiver_actuator_busy = true;
+    gnss_probe_request(GNSS_PROFILE_NO_HAS);
+    run(1500U);
+    CHECK(pvt_setter_count == pvt_before_busy && manual_holds == holds_before_busy + 1U);
+    CHECK(gnss_probe_auto_ready()); /* Nothing has changed yet. */
+    receiver_actuator_busy = false;
     run(6500U);
-    CHECK(!gnss_probe_auto_ready()); /* A successful query cannot repair a failed setter. */
+    CHECK(pvt_setter_count == pvt_before_busy + 1U && receiver_sbas && !receiver_ppp);
+    CHECK(gnss_probe_auto_ready() && !gnss_probe_auto_fault() &&
+          saved_selection() == SC_SETTINGS_GNSS_SBAS);
+    /* If it never settles, the switch is refused with the receiver untouched. */
+    receiver_actuator_busy = true;
     gnss_probe_request(GNSS_PROFILE_STANDALONE);
     run(6500U);
-    CHECK(gnss_probe_auto_ready() && !receiver_ppp && !receiver_sbas);
+    CHECK(pvt_setter_count == pvt_before_busy + 1U && receiver_sbas);
+    CHECK(gnss_probe_auto_ready() && !gnss_probe_auto_fault() &&
+          gnss_probe_selection() == SC_SETTINGS_GNSS_SBAS && gnss_probe_commands_idle());
+    receiver_actuator_busy = false;
+    /* A failed MCU save after a verified switch: the receiver is re-read and
+     * adopted, and the save is retried by the next recheck (hybrid resume). */
+    fail_mcu_save = true;
+    gnss_probe_request(GNSS_PROFILE_STANDALONE);
+    run(12000U);
+    CHECK(gnss_probe_auto_fault() && !gnss_probe_auto_ready() && !receiver_sbas);
+    CHECK(gnss_probe_selection() == SC_SETTINGS_GNSS_STANDALONE &&
+          saved_selection() == SC_SETTINGS_GNSS_SBAS);
+    fail_mcu_save = false;
+    CHECK(gnss_probe_auto_recheck());
+    run(6500U);
+    CHECK(gnss_probe_auto_ready() && !gnss_probe_auto_fault() &&
+          saved_selection() == SC_SETTINGS_GNSS_STANDALONE);
     gnss_probe_request(GNSS_PROFILE_PPS_OFF);
     run(1200U);
     CHECK(manual_holds != 0U);
@@ -1748,41 +1817,34 @@ int main(int argc, char **argv)
     gnss_probe_request(GNSS_PROFILE_ELEVATION_SURVEY);
     run(1500U);
     CHECK(mask_setters == 0U && boot_saves == 0U && manual_holds == holds_before_masks);
+    /* A mask setter whose reply is lost: the masks are read back right away.
+     * mask_fault=1 reports the failed change; known values block nothing. */
     lose_reply = true;
     gnss_probe_request(gnss_probe_command_profile("gnss mask pvt 15"));
     run(6500U);
     CHECK(pvt_mask == 15 && tracking_mask == 5 && mask_setters == 1U && boot_saves == 0U);
-    CHECK(gnss_probe_auto_fault() && !gnss_probe_auto_ready() && gnss_probe_mutation_hold());
+    CHECK(!gnss_probe_auto_fault() && gnss_probe_auto_ready() && mask_fault_flag() == 1U);
     lose_reply = false;
-    const unsigned before_blocked_selection = pvt_setter_count;
+    const unsigned before_selection = pvt_setter_count;
     gnss_probe_request(GNSS_PROFILE_NO_HAS);
-    run(1500U);
-    CHECK(pvt_setter_count == before_blocked_selection && boot_saves == 0U);
-    gnss_probe_request(GNSS_PROFILE_ELEVATION_SURVEY);
-    run(1500U);
-    CHECK(gnss_probe_auto_fault() && !gnss_probe_auto_ready());
-    gnss_probe_request(GNSS_PROFILE_AUTO_HYBRID);
     run(6500U);
-    CHECK(gnss_probe_auto_fault() &&
-          !gnss_probe_auto_ready()); /* Unrelated setup cannot repair it. */
-    CHECK(pvt_mask == 15 && tracking_mask == 5 && mask_setters == 1U && boot_saves == 0U);
+    CHECK(pvt_setter_count == before_selection + 1U && receiver_sbas && boot_saves == 1U);
+    CHECK(gnss_probe_auto_ready() && !gnss_probe_auto_fault());
     gnss_probe_request(gnss_probe_command_profile("gnss mask pvt 15"));
     run(6500U);
-    CHECK(!gnss_probe_auto_fault() && gnss_probe_auto_ready() && gnss_probe_mutation_hold());
-    CHECK(mask_setters == 2U && boot_saves == 1U && manual_holds == holds_before_masks + 2U);
+    CHECK(!gnss_probe_auto_fault() && gnss_probe_auto_ready() && mask_fault_flag() == 0U);
+    CHECK(mask_setters == 2U && boot_saves == 2U && manual_holds == holds_before_masks + 3U);
+    /* Verified values whose Boot save failed: known, reported, not blocking. */
     fail_save = true;
     gnss_probe_request(GNSS_PROFILE_ELEVATION_RESET);
     run(6500U);
-    CHECK(pvt_mask == -90 && tracking_mask == -90 && boot_saves == 2U);
-    CHECK(gnss_probe_auto_fault() && !gnss_probe_auto_ready());
+    CHECK(pvt_mask == -90 && tracking_mask == -90 && boot_saves == 3U);
+    CHECK(!gnss_probe_auto_fault() && gnss_probe_auto_ready() && mask_fault_flag() == 1U);
     fail_save = false;
-    gnss_probe_request(GNSS_PROFILE_SAVE_BOOT);
-    run(1500U);
-    CHECK(gnss_probe_auto_fault() &&
-          !gnss_probe_auto_ready()); /* Save alone cannot clear uncertainty. */
     gnss_probe_request(GNSS_PROFILE_ELEVATION_RESET);
     run(6500U);
-    CHECK(!gnss_probe_auto_fault() && gnss_probe_auto_ready() && gnss_probe_mutation_hold());
+    CHECK(!gnss_probe_auto_fault() && gnss_probe_auto_ready() && mask_fault_flag() == 0U);
+    CHECK(gnss_probe_mutation_hold());
     const unsigned writes_after_reset = mask_setters, saves_after_reset = boot_saves;
     run(37000U);
     CHECK(mask_setters == writes_after_reset && boot_saves == saves_after_reset);

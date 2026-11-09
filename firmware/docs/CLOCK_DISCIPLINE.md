@@ -73,6 +73,24 @@ changes after a gap, still recovers fully. A gap longer than the bridge (no
 usable epoch for 11.5 s while tracking, 2.5 s otherwise) freezes to HOLDOVER as
 before. Qualification and acquisition still require strictly contiguous epochs.
 
+**Drift-only fallback.** The GNSS selection sets the primary solution:
+PPP for `gnss auto` and `gnss has`, SBAS for `gnss sbas`, standalone for
+`gnss standalone`. A lower solution is a fallback: PPP to SBAS or standalone,
+or SBAS to standalone. Measured switches showed no drift jump at the 0.008 ppb
+noise level, while the bias jumped 4–13 ns and was not repeatable. So during a
+fallback only the FLL steers, with $T_f$ = **10 s**
+(`clock.drift_only_frequency_time_constant_s`) for every source. The phase loop
+is off and the primary solution's phase anchor is kept. On a return to SBAS,
+phase restarts after the normal qualification. A returning PPP solution can
+start tens of ns off and converge for 10–25 min, so after a return to PPP the
+FLL alone runs for at least **1000 s** (`clock.ppp_return_settle_s`). Phase then
+restarts once it qualifies. Each restart takes a fresh anchor, with no pull
+toward the pre-fallback reference. Its step against that anchor, in the same
+time system, is logged in `phase_reanchor`. `clock_guard` reports `fallback` and
+`settling`. A solution type whose pair is 0/0 is never steered on, in a
+fallback or while settling as well: the trim is held (DISCIPLINE_OFF) while
+the receiver reports that type.
+
 ## 2. Frequency FLL
 
 ### Fine frequency control
@@ -178,8 +196,9 @@ minus old reference) and `clock_guard` reports the count and running total, so
 the offset history can be reconstructed and applied in analysis. Steering it
 back pulled the oscillator up to about 1.1 ppb for ~25 min in the model (300 s
 hold with a 1 ppb move); re-anchoring re-locked in 158 s with no pull. A usable
-solution/time-system handover also captures a new anchor (not counted as a
-restart). Reset/jump/reference/configuration discontinuities force reference
+solution/time-system handover within the selected solution also captures a
+new anchor (not counted as a restart). A fallback keeps the existing anchor
+(section 1). Reset/jump/reference/configuration discontinuities force reference
 recovery.
 
 ### Gains and output in BOTH versus PHASE
@@ -212,9 +231,11 @@ $$
 u^{raw}_{k+1}=I^{trial}_{k+1}-K_{p\phi}\bar e_k.
 $$
 
-Here the integral represents **total trim**, in ppb. The output uses the
-boot-relative ±10 ppb envelope and normal trim slew limit; it does not use
-BOTH's ±0.1 ppb drift-request clamp or the FLL's acquired-trim ±1 ppb span.
+Here the integral represents **total trim**, in ppb. The output is bounded
+to **±10 ppb about the trim verified at the last acquisition**
+(`clock.phase_tracking_span_about_acquired_trim_ppb`), within the boot-relative
+envelope, and uses the normal trim slew limit; it does not use BOTH's ±0.1 ppb
+drift-request clamp or the FLL's acquired-trim ±1 ppb span.
 Receiver drift still serves integrity checks and diagnostics.
 
 At activation and active gain changes, the PI is preloaded for output continuity:
@@ -261,7 +282,9 @@ Temperature is not a clock qualification or lock condition (see section 4).
 `PHASE_RECOVERING` describes unmet lock qualification; **phase steering may
 remain enabled**. Small phase error alone is insufficient to establish lock.
 A contiguous qualified PPP/SBAS/standalone or time-system handover can retain
-active steering, re-anchor local phase and restart its 120 s lock span.
+active steering, re-anchor local phase and restart its 120 s lock span. A
+handover into a fallback keeps only the FLL running (section 1, drift-only
+fallback).
 
 ### Limiting and anti-windup
 
@@ -283,8 +306,15 @@ Sources: [hybrid.c](../core/src/hybrid.c), `activate_phase`,
 
 ## 4. Limits, validity and settings
 
-The overall trim envelope is the intersection of hardware clipping and **±10
-ppb around the first valid boot readback**. Normal fine-control slew is **0.003
+The overall trim envelope is the intersection of hardware clipping and **±1000
+ppb around the first valid boot readback**
+(`clock.automatic_total_span_about_boot_readback_ppb`). The OCXO starts from
+zero trim at power-up, so this span must cover its initial offset (6–8.5 ppb
+on the first boards) plus ageing over the unit's life (about 80 ppb in 20 years); it is a sanity
+bound, and a larger difference indicates a hardware problem. Tracking is bounded
+separately about the trim verified at the last acquisition: ±1 ppb with the
+FLL, ±10 ppb in phase-only control. Reaching a tracking bound freezes, then
+re-acquires and re-centres the span. Normal fine-control slew is **0.003
 ppb/s**. Each proposal's maximum movement is
 $0.003\min(1,\text{seconds since last completed write})$ ppb: accumulated
 wall time cannot create a large step. Hitting an absolute/tracking envelope
@@ -429,7 +459,7 @@ assumption; they are not measured output-clock performance results.
 | Phase activation and lock | 120 s qualification | Lock after 10 s good, lost after 3 s bad; 100 s lock-statistics window |
 | Phase PI | 1 Hz | Kp = 2/Tphi, Ki = 1/Tphi² |
 | Input guard | Per sample | Bias innovation clipped to ±2 ns; frequency innovation limit 0.25 ppb |
-| Oscillator actuator | ≤ 1 write/s | Tracking slew 0.003 ppb/s; ±1 ppb about the acquired trim, within ±10 ppb of the boot readback; ≥ 50 ms between register reads |
+| Oscillator actuator | ≤ 1 write/s | Tracking slew 0.003 ppb/s; ±1 ppb (FLL) or ±10 ppb (phase-only) about the acquired trim, within ±1000 ppb of the boot readback; ≥ 50 ms between register reads |
 | LED1 frequency settled | 50 samples + 10 s good | 121-sample scatter window; 120 s holdover grace |
 
 In simulation, a cold start locks in about 235 s for every source and a

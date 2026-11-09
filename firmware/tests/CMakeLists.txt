@@ -204,7 +204,7 @@ foreach(scenario cold qualified saved-off manual retry duplicate ignored shape r
 endforeach()
 add_test(NAME simpleclock_gnss_reboot COMMAND simpleclock_gnss_auto_tests reboot)
 add_test(NAME simpleclock_gnss_reboot_rejected COMMAND simpleclock_gnss_auto_tests reboot-reject)
-foreach(scenario IN ITEMS control control-ignore control-corrupt control-save-fail control-mcu-fail control-noop-cache lists lists-corrupt lists-dependency)
+foreach(scenario IN ITEMS control control-busy control-ignore control-corrupt control-save-fail control-mcu-fail control-noop-cache lists lists-corrupt lists-dependency)
     add_test(NAME simpleclock_gnss_bridge_${scenario} COMMAND simpleclock_gnss_auto_tests ${scenario})
 endforeach()
 foreach(selection auto sbas has standalone)

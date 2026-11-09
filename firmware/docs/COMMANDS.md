@@ -37,7 +37,7 @@ one's reply.
 | `hybrid status`, `hybrid config` | Send the status and configuration records now; `hybrid_config` includes the firmware `version`. |
 | `hybrid hold` | Stop steering; the oscillator keeps its current trim. Heater unaffected. |
 | `hybrid resume` | Clear a hold (and an acquisition fault); requalify, then steer. |
-| `hybrid params ppp\|sbas\|standalone\|static <Tf> <Tphi>` | Loop pair for one solution type, whole seconds, 0 (off) or 10–86400. Live; not saved. `hybrid params <Tf> <Tphi>` sets PPP. |
+| `hybrid params ppp\|sbas\|standalone\|static <Tf> <Tphi>` | Loop pair for one solution type, whole seconds, 0 (off) or 10–86400. Live; not saved. `hybrid params <Tf> <Tphi>` sets PPP. `0 0` holds the trim whenever the receiver reports that type, in a fallback too. |
 | `hybrid clip <ps>` | Per-sample bias clip, 1–5000 ps (default 2000). Each sample's bias innovation is clamped to ±clip before use. Live; not saved. |
 | `hybrid save` | Save the four loop pairs, clip, PPS policy, GNSS selection and receiver-profile flag to MCU flash. Steering continues. |
 | `pps policy continuous\|qualified\|off\|manual` | Receiver PPS output: always on, only while GNSS is usable, off, or left as configured. Live; save with `hybrid save`. |
@@ -72,6 +72,19 @@ available solution within the allowed set. Each is checked by readback and
 saved in the receiver and the MCU; `hybrid_config gnss_selection` reports
 0 auto, 1 SBAS, 2 PPP/HAS, 3 standalone. Send `hybrid resume` after a held
 selection to steer again.
+
+A held selection or mask change, and a `gnss write` or clock-holding
+`gnss exec`, first waits (up to 3 s) for the clock hold to
+take effect, and is refused with the receiver untouched if it does not. If a
+selection change fails after reaching the receiver (lost reply, wrong
+readback, failed save), the firmware reads the receiver back, adopts the mode
+it actually runs and saves that; `gnss_probe auto_fault=1` only while this
+runs. Send `hybrid resume` only after the change has completed (the
+`gnss_control` done event, or `gnss_selection` showing the new mode): a resume
+sent earlier can make the closing save fail, which `auto_fault=1` reports and
+a repeated command clears. Check `gnss_selection` to see which mode is in effect. A failed mask
+change is followed by a mask readback: `mask_fault=1` then reports the failed
+change, and the values shown are the receiver's actual masks.
 
 **Static (fixed-position) PVT** uses the expert setter, with StandAlone or
 StandAlone+SBAS (PPP requires Rover):
@@ -170,7 +183,7 @@ are not an atomic snapshot and need not appear exactly once per second.
 | --- | --- |
 | `clock_auto` | `state`, `enabled`, `reason` (bits below), `loop_mode`, `phase_mode`, `source_mode` (PVT mode: 1 standalone, 3 static, 6 SBAS, 10 PPP), `time_system`, `gnss_good`, `phase_enabled`, `relative_lock`, `frequency_settled`, `bias_ps`, `error_ps`, `d_nppb` (measured drift), `v_nppb` (drift target), `I_nppb` (integrator), `source_age_ms` |
 | `clock_actuator` | `applied_nppb`, `requested_nppb`, `readback_fcw`, `commanded_fcw`, `pending`, `known`, `writes`, `limiting`, `slew_limited`, `phase_limited`, `tx_drops`, `command_denied` |
-| `clock_guard` v2 | `clipped`, `clipped_samples`, `innovation_ps`, `lock_failures` (bits below), `reanchors`, `reanchor_total_ps`, `bridged_gaps`, `bridged_epochs`, `gnss_usable`, `thermal_warning` |
+| `clock_guard` v3 | `clipped`, `clipped_samples`, `innovation_ps`, `lock_failures` (bits below), `reanchors`, `reanchor_total_ps`, `bridged_gaps`, `bridged_epochs`, `fallback` (below the selected solution: frequency loop only), `settling` (after a return to PPP), `gnss_usable`, `thermal_warning` |
 | `hybrid_quality` | `reason`, frequency-monitor statistics (`frequency_mean_drift_nppb`, `frequency_sd_nppb`, …), window statistics, `receiver_config_ready`, `receiver_config_fault` |
 | `hybrid_config` v4 | `version` (firmware release), `loop_mode`, all eight loop times (`ppp_fll_time_s` … `static_phase_time_s`), `bias_clip_ps`, `pps_policy`, `gnss_selection`, `settings_saved`, `settings_dirty`, `settings_generation`, `settings_fault` |
 | `gnss_dop` | receiver `tdop_x100`, `nr_sv`, `valid`, `age_ms` (information only, never a control input) |
