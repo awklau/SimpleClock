@@ -91,7 +91,7 @@ jobs:
 
   macos:
     name: macOS (Apple Clang, Debug)
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Check out source
@@ -123,7 +123,7 @@ jobs:
         include:
           - os: ubuntu-24.04
             archive: arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi.tar.xz
-          - os: macos-14
+          - os: macos-15
             archive: arm-gnu-toolchain-14.3.rel1-darwin-arm64-arm-none-eabi.tar.xz
 
     steps:
