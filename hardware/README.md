@@ -53,7 +53,7 @@ the Altium project before ordering; nothing else depends on the stackup.
 - **Antenna:** an active GNSS antenna. Galileo HAS (PPP) needs one that covers
   the Galileo E6 band.
 - **Programming and first start:** [first flashing](../docs/FIRST_FLASHING.md),
-  then the [user manual](../docs/USER_MANUAL.md).
+  then the [user manual](../docs/README.md).
 
 ## Licence
 

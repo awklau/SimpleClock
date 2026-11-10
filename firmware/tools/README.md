@@ -50,4 +50,4 @@ python tools/usb-capture.py --port <port> --output <new folder> --seconds 600
 python tools/usb-capture.py --port <port> --output <new folder> --seconds 10 --command "hybrid config"
 ```
 
-The recording format is described in the [user manual](../../docs/USER_MANUAL.md#3-connect-and-record).
+The recording format is described in the [user manual](../../docs/README.md#3-connect-and-record).

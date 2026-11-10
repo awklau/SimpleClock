@@ -179,7 +179,7 @@ configures the receiver (free-running clock, data streams, PPP/HAS + SBAS +
 standalone, low/static dynamics), checks every setting by reading it back and
 saves it in the receiver. It warms the oscillator at full heater power, then
 regulates its temperature and starts disciplining the clock once the GNSS
-solution qualifies. See the [user manual](USER_MANUAL.md) for the LEDs,
+solution qualifies. See the [user manual](README.md) for the LEDs,
 commands and logging.
 
 ## Updating the firmware later

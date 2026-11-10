@@ -1,7 +1,7 @@
 # USB commands and telemetry
 
 Reference for the normal SimpleClock firmware's USB serial interface. For
-everyday use see the [user manual](../../docs/USER_MANUAL.md).
+everyday use see the [user manual](../../docs/README.md).
 
 ## Connection
 
