@@ -134,7 +134,7 @@ If you use SimpleClock, please cite:
 <!-- TODO: arXiv identifier, then venue, year and DOI; keep CITATION.cff in step. -->
 > A. W. K. Lau, B. Pollarolo and J. Mena-Parra, "SimpleClock: a
 > satellite-disciplined oscillator for astronomical instrumentation",
-> `<venue>`, `<year>`. DOI: `<doi>`
+> in preparation (arXiv link to follow).
 
 GitHub's "Cite this repository" button uses [CITATION.cff](CITATION.cff).
 

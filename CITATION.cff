@@ -24,6 +24,4 @@ preferred-citation:
       given-names: "Bruno"
     - family-names: "Mena-Parra"
       given-names: "Juan"
-  journal: "<journal or conference>"
-  year: "<year>"
-  doi: "<doi>"
+  # TODO: journal, year and doi (or the arXiv identifier as url) once published.
